@@ -21,6 +21,8 @@
         .btn-km:hover { background: #ba4a00; }
         .btn-danger { background: #c0392b; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 10px; }
         .btn-danger:hover { background: #962d22; }
+        .summary-box { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .summary-box h3 { color: #f1c40f; margin-top: 0; }
         .vehicle-card, .log-card, .inspection-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; position: relative; }
         .log-card { border-left-color: #e67e22; }
         .inspection-card { border-left-color: #8e44ad; }
@@ -32,6 +34,12 @@
 <div class="container">
     <h2>🚗 GarajDefteri</h2>
     
+    <!-- TOPLAM MASRAF ÖZETİ -->
+    <div class="summary-box">
+        <h3>💰 Genel Maliyet Özeti</h3>
+        <p id="total-cost-display">Toplam Masraf: Yükleniyor...</p>
+    </div>
+
     <!-- ARAÇ EKLEME FORMU -->
     <div class="form-group">
         <h3>Yeni Araç Ekle</h3>
@@ -112,6 +120,35 @@
 <script type="module">
     import { supabase } from './supabase.js'
 
+    // TOPLAM MALİYETİ HESAPLA VE GÖSTER
+    async function calculateTotalCost() {
+        const costDisplay = document.getElementById('total-cost-display')
+        
+        // Bakım masraflarını çek
+        const { data: maintenanceData, error: maintError } = await supabase.from('maintenance_logs').select('cost')
+        // Muayene masraflarını çek
+        const { data: inspectionData, error: inspError } = await supabase.from('inspection_logs').select('cost')
+
+        if (maintError || inspError) {
+            costDisplay.innerHTML = 'Toplam Masraf: Hesapdalanamadı'
+            return
+        }
+
+        let totalMaint = 0
+        if (maintenanceData) {
+            totalMaint = maintenanceData.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0)
+        }
+
+        let totalInsp = 0
+        if (inspectionData) {
+            totalInsp = inspectionData.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0)
+        }
+
+        const grandTotal = totalMaint + totalInsp
+        costDisplay.innerHTML = `Toplam Harcama: <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
+            <span style="font-size: 13px; color: #bdc3c7;">(Bakım: ${totalMaint.toLocaleString('tr-TR')} TL | Muayene: ${totalInsp.toLocaleString('tr-TR')} TL)</span>`
+    }
+
     // ARAÇLARI ÇEK
     async function fetchVehicles() {
         const listDiv = document.getElementById('vehicle-list')
@@ -163,6 +200,7 @@
 
         if (!data || data.length === 0) {
             logDiv.innerHTML = 'Henüz bakım kaydı yok.'
+            calculateTotalCost()
             return
         }
 
@@ -180,6 +218,7 @@
                 </div>
             `
         })
+        calculateTotalCost()
     }
 
     // MUAYENELERİ ÇEK
@@ -194,6 +233,7 @@
 
         if (!data || data.length === 0) {
             inspDiv.innerHTML = 'Henüz muayene kaydı yok.'
+            calculateTotalCost()
             return
         }
 
@@ -211,6 +251,7 @@
                 </div>
             `
         })
+        calculateTotalCost()
     }
 
     // ARAÇ EKLE
@@ -348,7 +389,7 @@
 
             const { data: publicUrlData } = supabase.storage
                 .from('receipts')
-                    .getPublicUrl(fileName)
+                .getPublicUrl(fileName)
 
             report_url = publicUrlData.publicUrl
         }
