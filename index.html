@@ -17,6 +17,8 @@
         .btn-secondary:hover { background: #1c5980; }
         .btn-inspection { background: #8e44ad; }
         .btn-inspection:hover { background: #732d91; }
+        .btn-km { background: #d35400; }
+        .btn-km:hover { background: #ba4a00; }
         .vehicle-card, .log-card, .inspection-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; }
         .log-card { border-left-color: #e67e22; }
         .inspection-card { border-left-color: #8e44ad; }
@@ -37,6 +39,18 @@
         <input type="number" id="current_km" placeholder="Güncel Kilometre (Örn: 145000)">
         <input type="text" id="plate" placeholder="Plaka (Örn: 03AB123)">
         <button onclick="addVehicle()">Aracı Kaydet</button>
+    </div>
+
+    <!-- KİLOMETRE GÜNCELLEME FORMU -->
+    <div class="form-group">
+        <h3>📊 KM Güncelle</h3>
+        <label for="km_vehicle_select">Araç Seçin:</label>
+        <select id="km_vehicle_select">
+            <option value="">Araç yükleniyor...</option>
+        </select>
+        
+        <input type="number" id="new_km" placeholder="Yeni Kilometre (Örn: 146200)">
+        <button class="btn-km" onclick="updateVehicleKm()">Kilometreyi Güncelle</button>
     </div>
 
     <!-- BAKIM / MASRAF EKLEME FORMU -->
@@ -101,6 +115,7 @@
         const listDiv = document.getElementById('vehicle-list')
         const selectBox = document.getElementById('vehicle_select')
         const inspSelectBox = document.getElementById('inspection_vehicle_select')
+        const kmSelectBox = document.getElementById('km_vehicle_select')
         
         const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
 
@@ -111,6 +126,7 @@
 
         selectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
         inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+        kmSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
 
         if (data.length === 0) {
             listDiv.innerHTML = 'Henüz eklenmiş araç yok.'
@@ -128,6 +144,7 @@
             const optHtml = `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.plate || 'Plakasız'})</option>`
             selectBox.innerHTML += optHtml
             inspSelectBox.innerHTML += optHtml
+            kmSelectBox.innerHTML += optHtml
         })
     }
 
@@ -217,6 +234,29 @@
             document.getElementById('year').value = ''
             document.getElementById('current_km').value = ''
             document.getElementById('plate').value = ''
+            fetchVehicles()
+        }
+    }
+
+    // KİLOMETRE GÜNCELLE
+    window.updateVehicleKm = async function() {
+        const vehicle_id = document.getElementById('km_vehicle_select').value
+        const new_km = document.getElementById('new_km').value
+
+        if (!vehicle_id || !new_km) {
+            alert('Lütfen araç seçin ve yeni kilometreyi girin!')
+            return
+        }
+
+        const { error } = await supabase.from('vehicles')
+            .update({ current_km: parseInt(new_km) })
+            .eq('id', vehicle_id)
+
+        if (error) {
+            alert('Kilometre güncellenemedi: ' + error.message)
+        } else {
+            alert('Kilometre başarıyla güncellendi!')
+            document.getElementById('new_km').value = ''
             fetchVehicles()
         }
     }
