@@ -7,13 +7,17 @@
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; text-align: center; }
-        .form-group { margin-bottom: 15px; }
+        h2, h3 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, button { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
-        button { background: #27ae60; color: white; border: none; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        input, select, button { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
+        button { background: #27ae60; color: white; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
         button:hover { background: #219653; }
-        .vehicle-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; }
+        .btn-secondary { background: #2980b9; }
+        .btn-secondary:hover { background: #1c5980; }
+        .vehicle-card, .log-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; }
+        .log-card { border-left-color: #e67e22; }
+        .receipt-img { max-width: 100%; border-radius: 5px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -21,7 +25,7 @@
 <div class="container">
     <h2>🚗 GarajDefteri</h2>
     
-    <!-- Araç Ekleme Formu -->
+    <!-- ARAÇ EKLEME FORMU -->
     <div class="form-group">
         <h3>Yeni Araç Ekle</h3>
         <input type="text" id="brand" placeholder="Marka (Örn: Lada)">
@@ -32,28 +36,51 @@
         <button onclick="addVehicle()">Aracı Kaydet</button>
     </div>
 
+    <!-- BAKIM / MASRAF EKLEME FORMU -->
+    <div class="form-group">
+        <h3>🔧 Bakım / Masraf Kaydı Ekle</h3>
+        <label for="vehicle_select">Araç Seçin:</label>
+        <select id="vehicle_select">
+            <option value="">Araç yükleniyor...</option>
+        </select>
+        
+        <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yağ Değişimi, Triger)">
+        <input type="number" id="cost" placeholder="Tutar (TL) (Örn: 1500)">
+        <input type="number" id="log_km" placeholder="İşlem Anındaki KM (Örn: 145500)">
+        <input type="date" id="log_date">
+        
+        <label for="receipt_file">Fiş / Fatura Fotoğrafı:</label>
+        <input type="file" id="receipt_file" accept="image/*">
+        
+        <button class="btn-secondary" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
+    </div>
+
     <hr style="margin: 30px 0;">
 
-    <!-- Araç Listesi -->
+    <!-- LİSTELER -->
     <h3>Garajdaki Araçlarım</h3>
     <div id="vehicle-list">Yükleniyor...</div>
+
+    <h3 style="margin-top: 30px;">Son Bakım Kayıtları</h3>
+    <div id="log-list">Yükleniyor...</div>
 </div>
 
 <script type="module">
     import { supabase } from './supabase.js'
 
-    // Araçları Listeleme Fonksiyonu
+    // ARAÇLARI ÇEK
     async function fetchVehicles() {
         const listDiv = document.getElementById('vehicle-list')
-        listDiv.innerHTML = 'Yükleniyor...'
-
+        const selectBox = document.getElementById('vehicle_select')
+        
         const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
 
         if (error) {
-            listDiv.innerHTML = 'Araçlar yüklenirken hata oluştu: ' + error.message
+            listDiv.innerHTML = 'Hata: ' + error.message
             return
         }
 
+        selectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
         if (data.length === 0) {
             listDiv.innerHTML = 'Henüz eklenmiş araç yok.'
             return
@@ -67,10 +94,42 @@
                     Plaka: ${vehicle.plate || 'Belirtilmemiş'} | KM: ${vehicle.current_km}
                 </div>
             `
+            selectBox.innerHTML += `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.plate || 'Plakasız'})</option>`
         })
     }
 
-    // Aracı Kaydetme Fonksiyonu (Global yapmak için window'a ekliyoruz)
+    // BAKIMLARI ÇEK
+    async function fetchLogs() {
+        const logDiv = document.getElementById('log-list')
+        
+        const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false })
+
+        if (error) {
+            logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message
+            return
+        }
+
+        if (!data || data.length === 0) {
+            logDiv.innerHTML = 'Henüz bakım kaydı yok.'
+            return
+        }
+
+        logDiv.innerHTML = ''
+        data.forEach(log => {
+            const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
+            const imgHtml = log.receipt_url ? `<br><img src="${log.receipt_url}" class="receipt-img">` : ''
+            
+            logDiv.innerHTML += `
+                <div class="log-card">
+                    <strong>${vehicleInfo} - ${log.title}</strong><br>
+                    Tutar: ${log.cost} TL | KM: ${log.km || '-'}<br>
+                    Tarih: ${log.date || '-'}${imgHtml}
+                </div>
+            `
+        })
+    }
+
+    // ARAÇ EKLE
     window.addVehicle = async function() {
         const brand = document.getElementById('brand').value
         const model = document.getElementById('model').value
@@ -90,8 +149,7 @@
         if (error) {
             alert('Kayıt başarısız: ' + error.message)
         } else {
-            alert('Araç başarıyla eklendi!')
-            // Formu temizle ve listeyi yenile
+            alert('Araç eklendi!')
             document.getElementById('brand').value = ''
             document.getElementById('model').value = ''
             document.getElementById('year').value = ''
@@ -101,8 +159,66 @@
         }
     }
 
-    // Sayfa açıldığında araçları getir
+    // BAKIM / FİŞ EKLE
+    window.addMaintenanceLog = async function() {
+        const vehicle_id = document.getElementById('vehicle_select').value
+        const title = document.getElementById('title').value
+        const cost = document.getElementById('cost').value
+        const km = document.getElementById('log_km').value
+        const date = document.getElementById('log_date').value
+        const fileInput = document.getElementById('receipt_file')
+
+        if (!vehicle_id || !title || !cost) {
+            alert('Lütfen araç, işlem tanımı ve tutar alanlarını doldurun!')
+            return
+        }
+
+        let receipt_url = null
+
+        // Fiş Fotoğrafı Yükleme (Supabase Storage)
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0]
+            const fileName = `${Date.now()}_${file.name}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('receipts')
+                .upload(fileName, file)
+
+            if (uploadError) {
+                alert('Fiş yüklenirken hata oluştu (Storage RLS kontrol edin): ' + uploadError.message)
+                return
+            }
+
+            const { data: publicUrlData } = supabase.storage
+                .from('receipts')
+                .getPublicUrl(fileName)
+
+            receipt_url = publicUrlData.publicUrl
+        }
+
+        // Veritabanına Bakım Kaydı Ekleme
+        const { error } = await supabase.from('maintenance_logs').insert([
+            { vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, receipt_url }
+        ])
+
+        if (error) {
+            alert('Bakım kaydı başarısız: ' + error.message)
+        } else {
+            alert('Bakım kaydı eklendi!')
+            document.getElementById('title').value = ''
+            document.getElementById('cost').value = ''
+            document.getElementById('log_km').value = ''
+            document.getElementById('receipt_file').value = ''
+            fetchLogs()
+        }
+    }
+
+    // Bugünün tarihini varsayılan yap
+    document.getElementById('log_date').valueAsDate = new Date()
+
+    // Sayfa açılışında verileri yükle
     fetchVehicles()
+    fetchLogs()
 </script>
 
 </body>
