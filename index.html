@@ -21,8 +21,11 @@
         .btn-km:hover { background: #ba4a00; }
         .btn-danger { background: #c0392b; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 10px; }
         .btn-danger:hover { background: #962d22; }
+        .btn-calendar { background: #e67e22; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 10px; text-decoration: none; display: inline-block; color: white; border-radius: 5px; font-weight: bold; }
+        .btn-calendar:hover { background: #d35400; }
         .summary-box { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
         .summary-box h3 { color: #f1c40f; margin-top: 0; }
+        .alert-box { background: #e74c3c; color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; display: none; }
         .date-filter-row { display: flex; gap: 10px; margin-top: 10px; }
         .date-filter-row input { margin-bottom: 0; background: white; color: #333; font-size: 14px; padding: 6px; }
         .vehicle-card, .log-card, .inspection-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; position: relative; }
@@ -36,6 +39,11 @@
 <div class="container">
     <h2>🚗 GarajDefteri</h2>
     
+    <!-- DİKKAT / HATIRLATICI UYARI KUTUSU -->
+    <div id="alert-container" class="alert-box">
+        ⚠️ <strong>Uyarı:</strong> Yaklaşan muayene tarihiniz var! Lütfen kontrol edin.
+    </div>
+
     <!-- TOPLAM MASRAF ÖZETİ VE TARİH FİLTRESİ -->
     <div class="summary-box">
         <h3>💰 Maliyet Özeti</h3>
@@ -134,11 +142,49 @@
 <script type="module">
     import { supabase } from './supabase.js'
 
-    // GLOBAL VERİLER (Filtreleme için bellekte tutacağız)
     let globalMaintenance = []
     let globalInspections = []
 
-    // TOPLAM MALİYETİ FİLTRELEYEREK HESAPLA VE GÖSTER
+    // KONTROL VE UYARI SİSTEMİ
+    function checkReminders(inspections) {
+        const alertBox = document.getElementById('alert-container')
+        const today = new Date()
+        let warningText = ""
+        let hasWarning = false
+
+        inspections.forEach(insp => {
+            if (insp.expiry_date) {
+                const expiryDate = new Date(insp.expiry_date)
+                const diffTime = expiryDate - today
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                const vehicleName = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
+
+                if (diffDays <= 30 && diffDays >= 0) {
+                    hasWarning = true
+                    warningText += `⚠️ ${vehicleName} aracınızın muayenesine <strong>${diffDays} gün</strong> kaldı! (Bitiş: ${insp.expiry_date})<br>`
+                } else if (diffDays < 0) {
+                    hasWarning = true
+                    warningText += `🚨 ${vehicleName} aracınızın muayene süresi <strong>GEÇMİŞ!</strong> (Bitiş: ${insp.expiry_date})<br>`
+                }
+            }
+        })
+
+        if (hasWarning) {
+            alertBox.innerHTML = warningText
+            alertBox.style.display = "block"
+        } else {
+            alertBox.style.display = "none"
+        }
+    }
+
+    // GOOGLE TAKVİM LİNKİ OLUŞTURUCU
+    function getGoogleCalendarUrl(title, dateStr, details) {
+        const dateFormatted = dateStr.replace(/-/g, '')
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dateFormatted}/${dateFormatted}&details=${encodeURIComponent(details)}`
+        return url
+    }
+
+    // TOPLAM MALİYETİ FİLTRELEYEREK HESAPLA
     window.calculateTotalCost = function() {
         const costDisplay = document.getElementById('total-cost-display')
         const startDateVal = document.getElementById('filter_start_date').value
@@ -147,55 +193,35 @@
         const startDate = startDateVal ? new Date(startDateVal) : null
         const endDate = endDateVal ? new Date(endDateVal) : null
 
-        // Başlangıç saatini sıfırla
         if (startDate) startDate.setHours(0, 0, 0, 0)
-        // Bitiş saatini gün sonuna ayarla
         if (endDate) endDate.setHours(23, 59, 59, 999)
 
-        // Bakım maliyetlerini filtrele
         let totalMaint = 0
         globalMaintenance.forEach(item => {
             const itemDate = item.date ? new Date(item.date) : null
             let pass = true
-
             if (startDate && itemDate && itemDate < startDate) pass = false
             if (endDate && itemDate && itemDate > endDate) pass = false
-
-            if (pass) {
-                totalMaint += parseFloat(item.cost) || 0
-            }
+            if (pass) totalMaint += parseFloat(item.cost) || 0
         })
 
-        // Muayene maliyetlerini filtrele (Muayene tarihi baz alınır)
         let totalInsp = 0
         globalInspections.forEach(item => {
             const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
             let pass = true
-
             if (startDate && itemDate && itemDate < startDate) pass = false
             if (endDate && itemDate && itemDate > endDate) pass = false
-
-            if (pass) {
-                totalInsp += parseFloat(item.cost) || 0
-            }
+            if (pass) totalInsp += parseFloat(item.cost) || 0
         })
 
         const grandTotal = totalMaint + totalInsp
-        
         let infoText = "Tüm Zamanlar"
-        if (startDateVal && endDateVal) {
-            infoText = `${startDateVal} ile ${endDateVal} arası`
-        } else if (startDateVal) {
-            infoText = `${startDateVal} sonrasıkı`
-        } else if (endDateVal) {
-            infoText = `${endDateVal} öncesi`
-        }
+        if (startDateVal && endDateVal) infoText = `${startDateVal} - ${endDateVal}`
 
         costDisplay.innerHTML = `Harcama (${infoText}): <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
             <span style="font-size: 13px; color: #bdc3c7;">(Bakım: ${totalMaint.toLocaleString('tr-TR')} TL | Muayene: ${totalInsp.toLocaleString('tr-TR')} TL)</span>`
     }
 
-    // FİLTREYİ SIFIRLA
     window.resetDateFilter = function() {
         document.getElementById('filter_start_date').value = ''
         document.getElementById('filter_end_date').value = ''
@@ -211,19 +237,13 @@
         
         const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
 
-        if (error) {
-            listDiv.innerHTML = 'Hata: ' + error.message
-            return
-        }
+        if (error) { listDiv.innerHTML = 'Hata: ' + error.message; return; }
 
         selectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
         inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
         kmSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
 
-        if (data.length === 0) {
-            listDiv.innerHTML = 'Henüz eklenmiş araç yok.'
-            return
-        }
+        if (data.length === 0) { listDiv.innerHTML = 'Henüz eklenmiş araç yok.'; return; }
 
         listDiv.innerHTML = ''
         data.forEach(vehicle => {
@@ -246,18 +266,10 @@
         const logDiv = document.getElementById('log-list')
         const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false })
 
-        if (error) {
-            logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message
-            return
-        }
+        if (error) { logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message; return; }
 
         globalMaintenance = data || []
-
-        if (globalMaintenance.length === 0) {
-            logDiv.innerHTML = 'Henüz bakım kaydı yok.'
-            calculateTotalCost()
-            return
-        }
+        if (globalMaintenance.length === 0) { logDiv.innerHTML = 'Henüz bakım kaydı yok.'; calculateTotalCost(); return; }
 
         logDiv.innerHTML = ''
         globalMaintenance.forEach(log => {
@@ -281,18 +293,12 @@
         const inspDiv = document.getElementById('inspection-list')
         const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
 
-        if (error) {
-            inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message
-            return
-        }
+        if (error) { inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message; return; }
 
         globalInspections = data || []
+        checkReminders(globalInspections)
 
-        if (globalInspections.length === 0) {
-            inspDiv.innerHTML = 'Henüz muayene kaydı yok.'
-            calculateTotalCost()
-            return
-        }
+        if (globalInspections.length === 0) { inspDiv.innerHTML = 'Henüz muayene kaydı yok.'; calculateTotalCost(); return; }
 
         inspDiv.innerHTML = ''
         globalInspections.forEach(insp => {
@@ -300,10 +306,18 @@
             const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
             const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank">📄 Muayene Raporunu Görüntüle</a>` : ''
             
+            // Google takvim etkinlik linki oluşturma
+            const calUrl = getGoogleCalendarUrl(
+                `🚗 Araç Muayene Bitişi (${vehicleInfo})`, 
+                insp.expiry_date, 
+                `GarajDefteri: ${vehicleInfo} plakalı aracınızın TÜVTÜRK muayene geçerlilik süresi bugün sona eriyor!`
+            )
+
             inspDiv.innerHTML += `
                 <div class="inspection-card">
                     <strong>${vehicleInfo} - Muayene Kaydı</strong>${costInfo}<br>
                     Muayene Tarihi: ${insp.inspection_date} | <strong>Son Geçerlilik: ${insp.expiry_date}</strong>${reportHtml}<br>
+                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle / Hatırlatıcı Kur</a>
                     <button class="btn-danger" onclick="deleteInspection('${insp.id}')">Muayene Kaydını Sil</button>
                 </div>
             `
@@ -311,7 +325,7 @@
         calculateTotalCost()
     }
 
-    // ARAÇ EKLE
+    // KAYIT EKLEME VE SİLME FONKSİYONLARI (Aynı mantıkla korunuyor)
     window.addVehicle = async function() {
         const brand = document.getElementById('brand').value
         const model = document.getElementById('model').value
@@ -319,52 +333,23 @@
         const current_km = document.getElementById('current_km').value
         const plate = document.getElementById('plate').value
 
-        if (!brand || !model || !current_km) {
-            alert('Lütfen marka, model ve kilometre alanlarını doldurun!')
-            return
-        }
+        if (!brand || !model || !current_km) { alert('Lütfen marka, model ve kilometre alanlarını doldurun!'); return; }
 
-        const { error } = await supabase.from('vehicles').insert([
-            { brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }
-        ])
-
-        if (error) {
-            alert('Kayıt başarısız: ' + error.message)
-        } else {
-            alert('Araç eklendi!')
-            document.getElementById('brand').value = ''
-            document.getElementById('model').value = ''
-            document.getElementById('year').value = ''
-            document.getElementById('current_km').value = ''
-            document.getElementById('plate').value = ''
-            fetchVehicles()
-        }
+        const { error } = await supabase.from('vehicles').insert([{ brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }])
+        if (error) alert('Kayıt başarısız: ' + error.message);
+        else { alert('Araç eklendi!'); document.getElementById('brand').value = ''; document.getElementById('model').value = ''; document.getElementById('year').value = ''; document.getElementById('current_km').value = ''; document.getElementById('plate').value = ''; fetchVehicles(); }
     }
 
-    // KİLOMETRE GÜNCELLE
     window.updateVehicleKm = async function() {
         const vehicle_id = document.getElementById('km_vehicle_select').value
         const new_km = document.getElementById('new_km').value
+        if (!vehicle_id || !new_km) { alert('Lütfen araç seçin ve yeni kilometreyi girin!'); return; }
 
-        if (!vehicle_id || !new_km) {
-            alert('Lütfen araç seçin ve yeni kilometreyi girin!')
-            return
-        }
-
-        const { error } = await supabase.from('vehicles')
-            .update({ current_km: parseInt(new_km) })
-            .eq('id', vehicle_id)
-
-        if (error) {
-            alert('Kilometre güncellenemedi: ' + error.message)
-        } else {
-            alert('Kilometre başarıyla güncellendi!')
-            document.getElementById('new_km').value = ''
-            fetchVehicles()
-        }
+        const { error } = await supabase.from('vehicles').update({ current_km: parseInt(new_km) }).eq('id', vehicle_id)
+        if (error) alert('Kilometre güncellenemedi: ' + error.message);
+        else { alert('Kilometre güncellendi!'); document.getElementById('new_km').value = ''; fetchVehicles(); }
     }
 
-    // BAKIM / FİŞ EKLE
     window.addMaintenanceLog = async function() {
         const vehicle_id = document.getElementById('vehicle_select').value
         const title = document.getElementById('title').value
@@ -373,50 +358,23 @@
         const date = document.getElementById('log_date').value
         const fileInput = document.getElementById('receipt_file')
 
-        if (!vehicle_id || !title || !cost) {
-            alert('Lütfen araç, işlem tanımı ve tutar alanlarını doldurun!')
-            return
-        }
+        if (!vehicle_id || !title || !cost) { alert('Lütfen araç, işlem tanımı ve tutar alanlarını doldurun!'); return; }
 
         let receipt_url = null
-
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0]
             const fileName = `${Date.now()}_${file.name}`
-            
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('receipts')
-                .upload(fileName, file)
-
-            if (uploadError) {
-                alert('Fiş yüklenirken hata oluştu: ' + uploadError.message)
-                return
-            }
-
-            const { data: publicUrlData } = supabase.storage
-                .from('receipts')
-                .getPublicUrl(fileName)
-
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            if (uploadError) { alert('Fiş yüklenirken hata: ' + uploadError.message); return; }
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
             receipt_url = publicUrlData.publicUrl
         }
 
-        const { error } = await supabase.from('maintenance_logs').insert([
-            { vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, receipt_url }
-        ])
-
-        if (error) {
-            alert('Bakım kaydı başarısız: ' + error.message)
-        } else {
-            alert('Bakım kaydı eklendi!')
-            document.getElementById('title').value = ''
-            document.getElementById('cost').value = ''
-            document.getElementById('log_km').value = ''
-            document.getElementById('receipt_file').value = ''
-            fetchLogs()
-        }
+        const { error } = await supabase.from('maintenance_logs').insert([{ vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, receipt_url }])
+        if (error) alert('Bakım kaydı başarısız: ' + error.message);
+        else { alert('Bakım kaydı eklendi!'); document.getElementById('title').value = ''; document.getElementById('cost').value = ''; document.getElementById('log_km').value = ''; document.getElementById('receipt_file').value = ''; fetchLogs(); }
     }
 
-    // MUAYENE EKLE
     window.addInspectionLog = async function() {
         const vehicle_id = document.getElementById('inspection_vehicle_select').value
         const inspection_date = document.getElementById('insp_date').value
@@ -424,85 +382,47 @@
         const cost = document.getElementById('insp_cost').value
         const fileInput = document.getElementById('report_file')
 
-        if (!vehicle_id || !inspection_date || !expiry_date) {
-            alert('Lütfen araç, muayene tarihi ve sonraki geçerlilik tarihini doldurun!')
-            return
-        }
+        if (!vehicle_id || !inspection_date || !expiry_date) { alert('Lütfen araç, muayene tarihi ve sonraki geçerlilik tarihini doldurun!'); return; }
 
         let report_url = null
-
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0]
             const fileName = `insp_${Date.now()}_${file.name}`
-            
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('receipts')
-                .upload(fileName, file)
-
-            if (uploadError) {
-                alert('Rapor yüklenirken hata oluştu: ' + uploadError.message)
-                return
-            }
-
-            const { data: publicUrlData } = supabase.storage
-                .from('receipts')
-                .getPublicUrl(fileName)
-
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            if (uploadError) { alert('Rapor yüklenirken hata: ' + uploadError.message); return; }
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
             report_url = publicUrlData.publicUrl
         }
 
-        const { error } = await supabase.from('inspection_logs').insert([
-            { 
-                vehicle_id, 
-                inspection_date, 
-                expiry_date, 
-                cost: cost ? parseFloat(cost) : null, 
-                report_url 
-            }
-        ])
-
-        if (error) {
-            alert('Muayene kaydı başarısız: ' + error.message)
-        } else {
-            alert('Muayene kaydı başarıyla eklendi!')
-            document.getElementById('insp_date').value = ''
-            document.getElementById('insp_expiry').value = ''
-            document.getElementById('insp_cost').value = ''
-            document.getElementById('report_file').value = ''
-            fetchInspections()
-        }
+        const { error } = await supabase.from('inspection_logs').insert([{ vehicle_id, inspection_date, expiry_date, cost: cost ? parseFloat(cost) : null, report_url }])
+        if (error) alert('Muayene kaydı başarısız: ' + error.message);
+        else { alert('Muayene kaydı eklendi!'); document.getElementById('insp_date').value = ''; document.getElementById('insp_expiry').value = ''; document.getElementById('insp_cost').value = ''; document.getElementById('report_file').value = ''; fetchInspections(); }
     }
 
-    // SİLME FONKSİYONLARI
     window.deleteVehicle = async function(id) {
-        if (confirm('Bu aracı ve buna ait tüm bakım/muayene kayıtlarını silmek istediğinize emin misiniz?')) {
+        if (confirm('Aracı silmek istediğinize emin misiniz?')) {
             const { error } = await supabase.from('vehicles').delete().eq('id', id)
-            if (error) alert('Silme hatası: ' + error.message)
-            else { fetchVehicles(); fetchLogs(); fetchInspections(); }
+            if (error) alert('Silme hatası: ' + error.message); else { fetchVehicles(); fetchLogs(); fetchInspections(); }
         }
     }
 
     window.deleteLog = async function(id) {
-        if (confirm('Bu bakım kaydını silmek istediğinize emin misiniz?')) {
+        if (confirm('Bakım kaydını silmek istediğinize emin misiniz?')) {
             const { error } = await supabase.from('maintenance_logs').delete().eq('id', id)
-            if (error) alert('Silme hatası: ' + error.message)
-            else fetchLogs();
+            if (error) alert('Silme hatası: ' + error.message); else fetchLogs();
         }
     }
 
     window.deleteInspection = async function(id) {
-        if (confirm('Bu muayene kaydını silmek istediğinize emin misiniz?')) {
+        if (confirm('Muayene kaydını silmek istediğinize emin misiniz?')) {
             const { error } = await supabase.from('inspection_logs').delete().eq('id', id)
-            if (error) alert('Silme hatası: ' + error.message)
-            else fetchInspections();
+            if (error) alert('Silme hatası: ' + error.message); else fetchInspections();
         }
     }
 
-    // Tarih alanlarına bugünü varsayılan atama
     document.getElementById('log_date').valueAsDate = new Date()
     document.getElementById('insp_date').valueAsDate = new Date()
 
-    // Sayfa açılışında verileri yükle
     fetchVehicles()
     fetchLogs()
     fetchInspections()
