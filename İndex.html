@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GarajDefteri</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, button { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: #27ae60; color: white; border: none; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #219653; }
+        .vehicle-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚗 GarajDefteri</h2>
+    
+    <!-- Araç Ekleme Formu -->
+    <div class="form-group">
+        <h3>Yeni Araç Ekle</h3>
+        <input type="text" id="brand" placeholder="Marka (Örn: Lada)">
+        <input type="text" id="model" placeholder="Model (Örn: Samara)">
+        <input type="number" id="year" placeholder="Yıl (Örn: 1990)">
+        <input type="number" id="current_km" placeholder="Güncel Kilometre (Örn: 145000)">
+        <input type="text" id="plate" placeholder="Plaka (Örn: 03AB123)">
+        <button onclick="addVehicle()">Aracı Kaydet</button>
+    </div>
+
+    <hr style="margin: 30px 0;">
+
+    <!-- Araç Listesi -->
+    <h3>Garajdaki Araçlarım</h3>
+    <div id="vehicle-list">Yükleniyor...</div>
+</div>
+
+<script type="module">
+    import { supabase } from './supabase.js'
+
+    // Araçları Listeleme Fonksiyonu
+    async function fetchVehicles() {
+        const listDiv = document.getElementById('vehicle-list')
+        listDiv.innerHTML = 'Yükleniyor...'
+
+        const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
+
+        if (error) {
+            listDiv.innerHTML = 'Araçlar yüklenirken hata oluştu: ' + error.message
+            return
+        }
+
+        if (data.length === 0) {
+            listDiv.innerHTML = 'Henüz eklenmiş araç yok.'
+            return
+        }
+
+        listDiv.innerHTML = ''
+        data.forEach(vehicle => {
+            listDiv.innerHTML += `
+                <div class="vehicle-card">
+                    <strong>${vehicle.brand} ${vehicle.model} (${vehicle.year || 'Yıl yok'})</strong><br>
+                    Plaka: ${vehicle.plate || 'Belirtilmemiş'} | KM: ${vehicle.current_km}
+                </div>
+            `
+        })
+    }
+
+    // Aracı Kaydetme Fonksiyonu (Global yapmak için window'a ekliyoruz)
+    window.addVehicle = async function() {
+        const brand = document.getElementById('brand').value
+        const model = document.getElementById('model').value
+        const year = document.getElementById('year').value
+        const current_km = document.getElementById('current_km').value
+        const plate = document.getElementById('plate').value
+
+        if (!brand || !model || !current_km) {
+            alert('Lütfen marka, model ve kilometre alanlarını doldurun!')
+            return
+        }
+
+        const { error } = await supabase.from('vehicles').insert([
+            { brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }
+        ])
+
+        if (error) {
+            alert('Kayıt başarısız: ' + error.message)
+        } else {
+            alert('Araç başarıyla eklendi!')
+            // Formu temizle ve listeyi yenile
+            document.getElementById('brand').value = ''
+            document.getElementById('model').value = ''
+            document.getElementById('year').value = ''
+            document.getElementById('current_km').value = ''
+            document.getElementById('plate').value = ''
+            fetchVehicles()
+        }
+    }
+
+    // Sayfa açıldığında araçları getir
+    fetchVehicles()
+</script>
+
+</body>
+</html>
