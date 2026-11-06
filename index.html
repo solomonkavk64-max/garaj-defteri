@@ -23,6 +23,7 @@
         .btn-km:hover { background: #138d75; }
         .btn-danger { background: #c0392b; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 10px; }
         .btn-danger:hover { background: #962d22; }
+        .btn-logout { background: #c0392b; width: auto; padding: 6px 12px; font-size: 13px; float: right; margin-top: -45px; }
         .btn-calendar { background: #e67e22; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 10px; text-decoration: none; display: inline-block; color: white; border-radius: 5px; font-weight: bold; }
         .btn-calendar:hover { background: #d35400; }
         .summary-box { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
@@ -35,147 +36,170 @@
         .inspection-card { border-left-color: #8e44ad; }
         .insurance-card { border-left-color: #d35400; }
         .receipt-img { max-width: 100%; border-radius: 5px; margin-top: 10px; display: block; }
+        #app-content, #auth-container { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚗 Faruk'un GarajDefteri</h2>
     
-    <!-- UYARI / HATIRLATICI KUTUSU -->
-    <div id="alert-container" class="alert-box"></div>
-
-    <!-- TOPLAM MASRAF ÖZETİ VE TARİH FİLTRESİ -->
-    <div class="summary-box">
-        <h3>💰 Maliyet Özeti</h3>
-        <p id="total-cost-display">Toplam Masraf: Yükleniyor...</p>
-        
-        <div class="date-filter-row">
-            <div style="flex:1;">
-                <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Başlangıç:</label>
-                <input type="date" id="filter_start_date" onchange="calculateTotalCost()">
-            </div>
-            <div style="flex:1;">
-                <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Bitiş:</label>
-                <input type="date" id="filter_end_date" onchange="calculateTotalCost()">
-            </div>
+    <!-- GİRİŞ / KAYIT EKRANI -->
+    <div id="auth-container">
+        <h2>🚗 Faruk'un GarajDefteri</h2>
+        <p style="text-align: center; color: #666;">Devam etmek için lütfen giriş yapın veya kayıt olun.</p>
+        <div class="form-group">
+            <label>E-posta Adresi:</label>
+            <input type="email" id="auth_email" placeholder="ornek@mail.com">
+            
+            <label>Şifre:</label>
+            <input type="password" id="auth_password" placeholder="******">
+            
+            <button onclick="handleLogin()" class="btn-secondary">Giriş Yap</button>
+            <button onclick="handleSignup()" style="background: #8e44ad; margin-top: 5px;">Kayıt Ol</button>
         </div>
-        <button onclick="resetDateFilter()" style="background: #e74c3c; margin-top: 8px; padding: 6px; font-size: 13px;">Tüm Zamanları Göster</button>
     </div>
 
-    <!-- ARAÇ EKLEME FORMU -->
-    <div class="form-group">
-        <h3>Yeni Araç Ekle</h3>
-        <input type="text" id="brand" placeholder="Marka (Örn: Lada)">
-        <input type="text" id="model" placeholder="Model (Örn: Samara)">
-        <input type="number" id="year" placeholder="Yıl (Örn: 1990)">
-        <input type="number" id="current_km" placeholder="Güncel Kilometre (Örn: 145000)">
-        <input type="text" id="plate" placeholder="Plaka (Örn: 03AB123)">
-        <button onclick="addVehicle()">Aracı Kaydet</button>
+    <!-- ANA UYGULAMA İÇERİĞİ (Giriş yapınca görünür) -->
+    <div id="app-content">
+        <h2>🚗 Faruk'un GarajDefteri</h2>
+        <button onclick="handleLogout()" class="btn-logout">Çıkış Yap</button>
+        
+        <!-- UYARI / HATIRLATICI KUTUSU -->
+        <div id="alert-container" class="alert-box" style="margin-top: 15px;"></div>
+
+        <!-- TOPLAM MASRAF ÖZETİ VE TARİH FİLTRESİ -->
+        <div class="summary-box">
+            <h3>💰 Maliyet Özeti</h3>
+            <p id="total-cost-display">Toplam Masraf: Yükleniyor...</p>
+            
+            <div class="date-filter-row">
+                <div style="flex:1;">
+                    <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Başlangıç:</label>
+                    <input type="date" id="filter_start_date" onchange="calculateTotalCost()">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Bitiş:</label>
+                    <input type="date" id="filter_end_date" onchange="calculateTotalCost()">
+                </div>
+            </div>
+            <button onclick="resetDateFilter()" style="background: #e74c3c; margin-top: 8px; padding: 6px; font-size: 13px;">Tüm Zamanları Göster</button>
+        </div>
+
+        <!-- ARAÇ EKLEME FORMU -->
+        <div class="form-group">
+            <h3>Yeni Araç Ekle</h3>
+            <input type="text" id="brand" placeholder="Marka (Örn: Lada)">
+            <input type="text" id="model" placeholder="Model (Örn: Samara)">
+            <input type="number" id="year" placeholder="Yıl (Örn: 1990)">
+            <input type="number" id="current_km" placeholder="Güncel Kilometre (Örn: 145000)">
+            <input type="text" id="plate" placeholder="Plaka (Örn: 03AB123)">
+            <button onclick="addVehicle()">Aracı Kaydet</button>
+        </div>
+
+        <!-- KİLOMETRE GÜNCELLEME FORMU -->
+        <div class="form-group">
+            <h3>📊 KM Güncelle</h3>
+            <label for="km_vehicle_select">Araç Seçin:</label>
+            <select id="km_vehicle_select">
+                <option value="">Araç yükleniyor...</option>
+            </select>
+            
+            <input type="number" id="new_km" placeholder="Yeni Kilometre (Örn: 146200)">
+            <button class="btn-km" onclick="updateVehicleKm()">Kilometreyi Güncelle</button>
+        </div>
+
+        <!-- BAKIM / MASRAF EKLEME FORMU -->
+        <div class="form-group">
+            <h3>🔧 Bakım / Rutin Servis Ekle</h3>
+            <label for="vehicle_select">Araç Seçin:</label>
+            <select id="vehicle_select">
+                <option value="">Araç yükleniyor...</option>
+            </select>
+            
+            <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yıllık Yağ Değişimi, Balata)">
+            <input type="number" id="cost" placeholder="Tutar (TL) (Örn: 1500)">
+            <input type="number" id="log_km" placeholder="İşlem Anındaki KM (Örn: 145500)">
+            <input type="date" id="log_date">
+            
+            <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
+            <label style="font-size:13px; color:#c0392b;">Sonraki Bakım Hatırlatıcısı (İsteğe Bağlı):</label>
+            <input type="number" id="next_km" placeholder="Sonraki Bakım KM (Örn: 155000)">
+            <input type="date" id="next_date">
+            
+            <label for="receipt_file">Fiş / Fatura Fotoğrafı:</label>
+            <input type="file" id="receipt_file" accept="image/*">
+            
+            <button class="btn-secondary" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
+        </div>
+
+        <!-- SİGORTA / KASKO EKLEME FORMU -->
+        <div class="form-group">
+            <h3>🛡️ Sigorta / Kasko Poliçesi Ekle</h3>
+            <label for="insurance_vehicle_select">Araç Seçin:</label>
+            <select id="insurance_vehicle_select">
+                <option value="">Araç yükleniyor...</option>
+            </select>
+            
+            <label>Poliçe Türü:</label>
+            <select id="insurance_type">
+                <option value="Kasko">Kasko</option>
+                <option value="Trafik Sigortası">Trafik Sigortası</option>
+            </select>
+
+            <input type="text" id="company_name" placeholder="Sigorta Şirketi (Örn: Anadolu Sigorta)">
+            
+            <label>Poliçe Başlangıç Tarihi:</label>
+            <input type="date" id="ins_start_date">
+            
+            <label>Poliçe Bitiş (Son Geçerlilik) Tarihi:</label>
+            <input type="date" id="ins_expiry_date">
+            
+            <input type="number" id="ins_cost" placeholder="Poliçe Ücreti (TL)">
+            
+            <label for="policy_file">Poliçe Belgesi (Fotoğraf / PDF):</label>
+            <input type="file" id="policy_file" accept="image/*,.pdf">
+            
+            <button class="btn-insurance" onclick="addInsuranceLog()">Poliçeyi Kaydet</button>
+        </div>
+
+        <!-- TÜVTÜRK MUAYENE EKLEME FORMU -->
+        <div class="form-group">
+            <h3>🔍 TÜVTÜRK Muayene Kaydı Ekle</h3>
+            <label for="inspection_vehicle_select">Araç Seçin:</label>
+            <select id="inspection_vehicle_select">
+                <option value="">Araç yükleniyor...</option>
+            </select>
+            
+            <label>Muayene Tarihi:</label>
+            <input type="date" id="insp_date">
+            
+            <label>Sonraki Muayene Geçerlilik Tarihi:</label>
+            <input type="date" id="insp_expiry">
+            
+            <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL) (İsteğe bağlı)">
+            
+            <label for="report_file">Muayene Raporu / Belge:</label>
+            <input type="file" id="report_file" accept="image/*,.pdf">
+            
+            <button class="btn-inspection" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
+        </div>
+
+        <hr style="margin: 30px 0;">
+
+        <!-- LİSTELER -->
+        <h3>Garajdaki Araçlarım</h3>
+        <div id="vehicle-list">Yükleniyor...</div>
+
+        <h3 style="margin-top: 30px;">🛡️ Sigorta & Kasko Poliçeleri</h3>
+        <div id="insurance-list">Yükleniyor...</div>
+
+        <h3 style="margin-top: 30px;">🔍 Muayene Geçmişi</h3>
+        <div id="inspection-list">Yükleniyor...</div>
+
+        <h3 style="margin-top: 30px;">Son Bakım / Servis Kayıtları</h3>
+        <div id="log-list">Yükleniyor...</div>
     </div>
 
-    <!-- KİLOMETRE GÜNCELLEME FORMU -->
-    <div class="form-group">
-        <h3>📊 KM Güncelle</h3>
-        <label for="km_vehicle_select">Araç Seçin:</label>
-        <select id="km_vehicle_select">
-            <option value="">Araç yükleniyor...</option>
-        </select>
-        
-        <input type="number" id="new_km" placeholder="Yeni Kilometre (Örn: 146200)">
-        <button class="btn-km" onclick="updateVehicleKm()">Kilometreyi Güncelle</button>
-    </div>
-
-    <!-- BAKIM / MASRAF EKLEME FORMU -->
-    <div class="form-group">
-        <h3>🔧 Bakım / Rutin Servis Ekle</h3>
-        <label for="vehicle_select">Araç Seçin:</label>
-        <select id="vehicle_select">
-            <option value="">Araç yükleniyor...</option>
-        </select>
-        
-        <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yıllık Yağ Değişimi, Balata)">
-        <input type="number" id="cost" placeholder="Tutar (TL) (Örn: 1500)">
-        <input type="number" id="log_km" placeholder="İşlem Anındaki KM (Örn: 145500)">
-        <input type="date" id="log_date">
-        
-        <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
-        <label style="font-size:13px; color:#c0392b;">Sonraki Bakım Hatırlatıcısı (İsteğe Bağlı):</label>
-        <input type="number" id="next_km" placeholder="Sonraki Bakım KM (Örn: 155000)">
-        <input type="date" id="next_date">
-        
-        <label for="receipt_file">Fiş / Fatura Fotoğrafı:</label>
-        <input type="file" id="receipt_file" accept="image/*">
-        
-        <button class="btn-secondary" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
-    </div>
-
-    <!-- SİGORTA / KASKO EKLEME FORMU -->
-    <div class="form-group">
-        <h3>🛡️ Sigorta / Kasko Poliçesi Ekle</h3>
-        <label for="insurance_vehicle_select">Araç Seçin:</label>
-        <select id="insurance_vehicle_select">
-            <option value="">Araç yükleniyor...</option>
-        </select>
-        
-        <label>Poliçe Türü:</label>
-        <select id="insurance_type">
-            <option value="Kasko">Kasko</option>
-            <option value="Trafik Sigortası">Trafik Sigortası</option>
-        </select>
-
-        <input type="text" id="company_name" placeholder="Sigorta Şirketi (Örn: Anadolu Sigorta)">
-        
-        <label>Poliçe Başlangıç Tarihi:</label>
-        <input type="date" id="ins_start_date">
-        
-        <label>Poliçe Bitiş (Son Geçerlilik) Tarihi:</label>
-        <input type="date" id="ins_expiry_date">
-        
-        <input type="number" id="ins_cost" placeholder="Poliçe Ücreti (TL)">
-        
-        <label for="policy_file">Poliçe Belgesi (Fotoğraf / PDF):</label>
-        <input type="file" id="policy_file" accept="image/*,.pdf">
-        
-        <button class="btn-insurance" onclick="addInsuranceLog()">Poliçeyi Kaydet</button>
-    </div>
-
-    <!-- TÜVTÜRK MUAYENE EKLEME FORMU -->
-    <div class="form-group">
-        <h3>🔍 TÜVTÜRK Muayene Kaydı Ekle</h3>
-        <label for="inspection_vehicle_select">Araç Seçin:</label>
-        <select id="inspection_vehicle_select">
-            <option value="">Araç yükleniyor...</option>
-        </select>
-        
-        <label>Muayene Tarihi:</label>
-        <input type="date" id="insp_date">
-        
-        <label>Sonraki Muayene Geçerlilik Tarihi:</label>
-        <input type="date" id="insp_expiry">
-        
-        <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL) (İsteğe bağlı)">
-        
-        <label for="report_file">Muayene Raporu / Belge:</label>
-        <input type="file" id="report_file" accept="image/*,.pdf">
-        
-        <button class="btn-inspection" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
-    </div>
-
-    <hr style="margin: 30px 0;">
-
-    <!-- LİSTELER -->
-    <h3>Garajdaki Araçlarım</h3>
-    <div id="vehicle-list">Yükleniyor...</div>
-
-    <h3 style="margin-top: 30px;">🛡️ Sigorta & Kasko Poliçeleri</h3>
-    <div id="insurance-list">Yükleniyor...</div>
-
-    <h3 style="margin-top: 30px;">🔍 Muayene Geçmişi</h3>
-    <div id="inspection-list">Yükleniyor...</div>
-
-    <h3 style="margin-top: 30px;">Son Bakım / Servis Kayıtları</h3>
-    <div id="log-list">Yükleniyor...</div>
 </div>
 
 <script type="module">
@@ -186,14 +210,74 @@
     let globalInspections = []
     let globalInsurances = []
 
-    // UYARI VE HATIRLATICI KONTROLÜ (Muayene + Bakım + Sigorta/Kasko)
+    // KULLANICI OTURUM KONTROLÜ
+    async function checkUserSession() {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+            document.getElementById('auth-container').style.display = 'none'
+            document.getElementById('app-content').style.display = 'block'
+            loadAllData()
+        } else {
+            document.getElementById('auth-container').style.display = 'block'
+            document.getElementById('app-content').style.display = 'none'
+        }
+    }
+
+    window.handleLogin = async function() {
+        const email = document.getElementById('auth_email').value
+        const password = document.getElementById('auth_password').value
+
+        if (!email || !password) {
+            alert('Lütfen e-posta ve şifrenizi girin!')
+            return
+        }
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) {
+            alert('Giriş başarısız: ' + error.message)
+        } else {
+            checkUserSession()
+        }
+    }
+
+    window.handleSignup = async function() {
+        const email = document.getElementById('auth_email').value
+        const password = document.getElementById('auth_password').value
+
+        if (!email || !password) {
+            alert('Lütfen e-posta ve şifrenizi girin!')
+            return
+        }
+
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) {
+            alert('Kayıt başarısız: ' + error.message)
+        } else {
+            alert('Kayıt başarılı! Giriş yapabilirsiniz.')
+        }
+    }
+
+    window.handleLogout = async function() {
+        await supabase.auth.signOut()
+        checkUserSession()
+    }
+
+    function loadAllData() {
+        fetchVehicles()
+        fetchInsurances()
+        fetchLogs()
+        fetchInspections()
+        document.getElementById('log_date').valueAsDate = new Date()
+        document.getElementById('insp_date').valueAsDate = new Date()
+        document.getElementById('ins_start_date').valueAsDate = new Date()
+    }
+
     function checkReminders() {
         const alertBox = document.getElementById('alert-container')
         const today = new Date()
         let warningText = ""
         let hasWarning = false
 
-        // 1. Sigorta / Kasko Bitiş Kontrolleri
         globalInsurances.forEach(ins => {
             if (ins.expiry_date) {
                 const expiryDate = new Date(ins.expiry_date)
@@ -210,7 +294,6 @@
             }
         })
 
-        // 2. Muayene Kontrolleri
         globalInspections.forEach(insp => {
             if (insp.expiry_date) {
                 const expiryDate = new Date(insp.expiry_date)
@@ -227,7 +310,6 @@
             }
         })
 
-        // 3. Bakım Tarihi ve KM Kontrolleri
         globalMaintenance.forEach(log => {
             const vehicle = globalVehicles.find(v => v.id === log.vehicle_id)
             const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
@@ -358,7 +440,6 @@
         checkReminders()
     }
 
-    // SİGORTALARI ÇEK
     async function fetchInsurances() {
         const insDiv = document.getElementById('insurance-list')
         const { data, error } = await supabase.from('insurance_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
@@ -479,7 +560,6 @@
         else { alert('Kilometre güncellendi!'); document.getElementById('new_km').value = ''; fetchVehicles(); fetchLogs(); }
     }
 
-    // SİGORTA / KASKO EKLE
     window.addInsuranceLog = async function() {
         const vehicle_id = document.getElementById('insurance_vehicle_select').value
         const insurance_type = document.getElementById('insurance_type').value
@@ -502,13 +582,7 @@
         }
 
         const { error } = await supabase.from('insurance_logs').insert([{ 
-            vehicle_id, 
-            insurance_type, 
-            company_name, 
-            start_date, 
-            expiry_date, 
-            cost: cost ? parseFloat(cost) : null, 
-            policy_url 
+            vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url 
         }])
 
         if (error) alert('Poliçe kaydı başarısız: ' + error.message);
@@ -539,7 +613,7 @@
             const fileName = `${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
             if (uploadError) { alert('Fiş yüklenirken hata: ' + uploadError.message); return; }
-            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
+            const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
             receipt_url = publicUrlData.publicUrl
         }
 
@@ -570,7 +644,7 @@
             const fileName = `insp_${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
             if (uploadError) { alert('Rapor yüklenirken hata: ' + uploadError.message); return; }
-            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
+            const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
             report_url = publicUrlData.publicUrl
         }
 
@@ -607,14 +681,8 @@
         }
     }
 
-    document.getElementById('log_date').valueAsDate = new Date()
-    document.getElementById('insp_date').valueAsDate = new Date()
-    document.getElementById('ins_start_date').valueAsDate = new Date()
-
-    fetchVehicles()
-    fetchInsurances()
-    fetchLogs()
-    fetchInspections()
+    // Uygulama açıldığında oturumu kontrol et
+    checkUserSession()
 </script>
 
 </body>
