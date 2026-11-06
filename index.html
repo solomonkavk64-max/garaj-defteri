@@ -23,6 +23,8 @@
         .btn-danger:hover { background: #962d22; }
         .summary-box { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
         .summary-box h3 { color: #f1c40f; margin-top: 0; }
+        .date-filter-row { display: flex; gap: 10px; margin-top: 10px; }
+        .date-filter-row input { margin-bottom: 0; background: white; color: #333; font-size: 14px; padding: 6px; }
         .vehicle-card, .log-card, .inspection-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; position: relative; }
         .log-card { border-left-color: #e67e22; }
         .inspection-card { border-left-color: #8e44ad; }
@@ -34,10 +36,22 @@
 <div class="container">
     <h2>🚗 GarajDefteri</h2>
     
-    <!-- TOPLAM MASRAF ÖZETİ -->
+    <!-- TOPLAM MASRAF ÖZETİ VE TARİH FİLTRESİ -->
     <div class="summary-box">
-        <h3>💰 Genel Maliyet Özeti</h3>
+        <h3>💰 Maliyet Özeti</h3>
         <p id="total-cost-display">Toplam Masraf: Yükleniyor...</p>
+        
+        <div class="date-filter-row">
+            <div style="flex:1;">
+                <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Başlangıç:</label>
+                <input type="date" id="filter_start_date" onchange="calculateTotalCost()">
+            </div>
+            <div style="flex:1;">
+                <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Bitiş:</label>
+                <input type="date" id="filter_end_date" onchange="calculateTotalCost()">
+            </div>
+        </div>
+        <button onclick="resetDateFilter()" style="background: #e74c3c; margin-top: 8px; padding: 6px; font-size: 13px;">Tüm Zamanları Göster</button>
     </div>
 
     <!-- ARAÇ EKLEME FORMU -->
@@ -120,33 +134,72 @@
 <script type="module">
     import { supabase } from './supabase.js'
 
-    // TOPLAM MALİYETİ HESAPLA VE GÖSTER
-    async function calculateTotalCost() {
+    // GLOBAL VERİLER (Filtreleme için bellekte tutacağız)
+    let globalMaintenance = []
+    let globalInspections = []
+
+    // TOPLAM MALİYETİ FİLTRELEYEREK HESAPLA VE GÖSTER
+    window.calculateTotalCost = function() {
         const costDisplay = document.getElementById('total-cost-display')
-        
-        // Bakım masraflarını çek
-        const { data: maintenanceData, error: maintError } = await supabase.from('maintenance_logs').select('cost')
-        // Muayene masraflarını çek
-        const { data: inspectionData, error: inspError } = await supabase.from('inspection_logs').select('cost')
+        const startDateVal = document.getElementById('filter_start_date').value
+        const endDateVal = document.getElementById('filter_end_date').value
 
-        if (maintError || inspError) {
-            costDisplay.innerHTML = 'Toplam Masraf: Hesapdalanamadı'
-            return
-        }
+        const startDate = startDateVal ? new Date(startDateVal) : null
+        const endDate = endDateVal ? new Date(endDateVal) : null
 
+        // Başlangıç saatini sıfırla
+        if (startDate) startDate.setHours(0, 0, 0, 0)
+        // Bitiş saatini gün sonuna ayarla
+        if (endDate) endDate.setHours(23, 59, 59, 999)
+
+        // Bakım maliyetlerini filtrele
         let totalMaint = 0
-        if (maintenanceData) {
-            totalMaint = maintenanceData.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0)
-        }
+        globalMaintenance.forEach(item => {
+            const itemDate = item.date ? new Date(item.date) : null
+            let pass = true
 
+            if (startDate && itemDate && itemDate < startDate) pass = false
+            if (endDate && itemDate && itemDate > endDate) pass = false
+
+            if (pass) {
+                totalMaint += parseFloat(item.cost) || 0
+            }
+        })
+
+        // Muayene maliyetlerini filtrele (Muayene tarihi baz alınır)
         let totalInsp = 0
-        if (inspectionData) {
-            totalInsp = inspectionData.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0)
-        }
+        globalInspections.forEach(item => {
+            const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
+            let pass = true
+
+            if (startDate && itemDate && itemDate < startDate) pass = false
+            if (endDate && itemDate && itemDate > endDate) pass = false
+
+            if (pass) {
+                totalInsp += parseFloat(item.cost) || 0
+            }
+        })
 
         const grandTotal = totalMaint + totalInsp
-        costDisplay.innerHTML = `Toplam Harcama: <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
+        
+        let infoText = "Tüm Zamanlar"
+        if (startDateVal && endDateVal) {
+            infoText = `${startDateVal} ile ${endDateVal} arası`
+        } else if (startDateVal) {
+            infoText = `${startDateVal} sonrasıkı`
+        } else if (endDateVal) {
+            infoText = `${endDateVal} öncesi`
+        }
+
+        costDisplay.innerHTML = `Harcama (${infoText}): <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
             <span style="font-size: 13px; color: #bdc3c7;">(Bakım: ${totalMaint.toLocaleString('tr-TR')} TL | Muayene: ${totalInsp.toLocaleString('tr-TR')} TL)</span>`
+    }
+
+    // FİLTREYİ SIFIRLA
+    window.resetDateFilter = function() {
+        document.getElementById('filter_start_date').value = ''
+        document.getElementById('filter_end_date').value = ''
+        calculateTotalCost()
     }
 
     // ARAÇLARI ÇEK
@@ -198,14 +251,16 @@
             return
         }
 
-        if (!data || data.length === 0) {
+        globalMaintenance = data || []
+
+        if (globalMaintenance.length === 0) {
             logDiv.innerHTML = 'Henüz bakım kaydı yok.'
             calculateTotalCost()
             return
         }
 
         logDiv.innerHTML = ''
-        data.forEach(log => {
+        globalMaintenance.forEach(log => {
             const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
             const imgHtml = log.receipt_url ? `<br><img src="${log.receipt_url}" class="receipt-img">` : ''
             
@@ -231,14 +286,16 @@
             return
         }
 
-        if (!data || data.length === 0) {
+        globalInspections = data || []
+
+        if (globalInspections.length === 0) {
             inspDiv.innerHTML = 'Henüz muayene kaydı yok.'
             calculateTotalCost()
             return
         }
 
         inspDiv.innerHTML = ''
-        data.forEach(insp => {
+        globalInspections.forEach(insp => {
             const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
             const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
             const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank">📄 Muayene Raporunu Görüntüle</a>` : ''
