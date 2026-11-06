@@ -15,9 +15,12 @@
         button:hover { background: #219653; }
         .btn-secondary { background: #2980b9; }
         .btn-secondary:hover { background: #1c5980; }
-        .vehicle-card, .log-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; }
+        .btn-inspection { background: #8e44ad; }
+        .btn-inspection:hover { background: #732d91; }
+        .vehicle-card, .log-card, .inspection-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; }
         .log-card { border-left-color: #e67e22; }
-        .receipt-img { max-width: 100%; border-radius: 5px; margin-top: 10px; }
+        .inspection-card { border-left-color: #8e44ad; }
+        .receipt-img { max-width: 100%; border-radius: 5px; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
@@ -55,11 +58,36 @@
         <button class="btn-secondary" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
     </div>
 
+    <!-- TÜVTÜRK MUAYENE EKLEME FORMU -->
+    <div class="form-group">
+        <h3>🔍 TÜVTÜRK Muayene Kaydı Ekle</h3>
+        <label for="inspection_vehicle_select">Araç Seçin:</label>
+        <select id="inspection_vehicle_select">
+            <option value="">Araç yükleniyor...</option>
+        </select>
+        
+        <label>Muayene Tarihi:</label>
+        <input type="date" id="insp_date">
+        
+        <label>Sonraki Muayene Geçerlilik Tarihi:</label>
+        <input type="date" id="insp_expiry">
+        
+        <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL) (İsteğe bağlı)">
+        
+        <label for="report_file">Muayene Raporu / Belge:</label>
+        <input type="file" id="report_file" accept="image/*,.pdf">
+        
+        <button class="btn-inspection" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
+    </div>
+
     <hr style="margin: 30px 0;">
 
     <!-- LİSTELER -->
     <h3>Garajdaki Araçlarım</h3>
     <div id="vehicle-list">Yükleniyor...</div>
+
+    <h3 style="margin-top: 30px;">🔍 Muayene Geçmişi</h3>
+    <div id="inspection-list">Yükleniyor...</div>
 
     <h3 style="margin-top: 30px;">Son Bakım Kayıtları</h3>
     <div id="log-list">Yükleniyor...</div>
@@ -72,6 +100,7 @@
     async function fetchVehicles() {
         const listDiv = document.getElementById('vehicle-list')
         const selectBox = document.getElementById('vehicle_select')
+        const inspSelectBox = document.getElementById('inspection_vehicle_select')
         
         const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
 
@@ -81,6 +110,8 @@
         }
 
         selectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+        inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+
         if (data.length === 0) {
             listDiv.innerHTML = 'Henüz eklenmiş araç yok.'
             return
@@ -94,14 +125,15 @@
                     Plaka: ${vehicle.plate || 'Belirtilmemiş'} | KM: ${vehicle.current_km}
                 </div>
             `
-            selectBox.innerHTML += `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.plate || 'Plakasız'})</option>`
+            const optHtml = `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.plate || 'Plakasız'})</option>`
+            selectBox.innerHTML += optHtml
+            inspSelectBox.innerHTML += optHtml
         })
     }
 
     // BAKIMLARI ÇEK
     async function fetchLogs() {
         const logDiv = document.getElementById('log-list')
-        
         const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false })
 
         if (error) {
@@ -124,6 +156,36 @@
                     <strong>${vehicleInfo} - ${log.title}</strong><br>
                     Tutar: ${log.cost} TL | KM: ${log.km || '-'}<br>
                     Tarih: ${log.date || '-'}${imgHtml}
+                </div>
+            `
+        })
+    }
+
+    // MUAYENELERİ ÇEK
+    async function fetchInspections() {
+        const inspDiv = document.getElementById('inspection-list')
+        const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
+
+        if (error) {
+            inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message
+            return
+        }
+
+        if (!data || data.length === 0) {
+            inspDiv.innerHTML = 'Henüz muayene kaydı yok.'
+            return
+        }
+
+        inspDiv.innerHTML = ''
+        data.forEach(insp => {
+            const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
+            const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
+            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank">📄 Muayene Raporunu Görüntüle</a>` : ''
+            
+            inspDiv.innerHTML += `
+                <div class="inspection-card">
+                    <strong>${vehicleInfo} - Muayene Kaydı</strong>${costInfo}<br>
+                    Muayene Tarihi: ${insp.inspection_date} | <strong>Son Geçerlilik: ${insp.expiry_date}</strong>${reportHtml}
                 </div>
             `
         })
@@ -175,7 +237,6 @@
 
         let receipt_url = null
 
-        // Fiş Fotoğrafı Yükleme (Supabase Storage)
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0]
             const fileName = `${Date.now()}_${file.name}`
@@ -185,7 +246,7 @@
                 .upload(fileName, file)
 
             if (uploadError) {
-                alert('Fiş yüklenirken hata oluştu (Storage RLS kontrol edin): ' + uploadError.message)
+                alert('Fiş yüklenirken hata oluştu: ' + uploadError.message)
                 return
             }
 
@@ -196,7 +257,6 @@
             receipt_url = publicUrlData.publicUrl
         }
 
-        // Veritabanına Bakım Kaydı Ekleme
         const { error } = await supabase.from('maintenance_logs').insert([
             { vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, receipt_url }
         ])
@@ -213,12 +273,71 @@
         }
     }
 
-    // Bugünün tarihini varsayılan yap
+    // MUAYENE EKLE
+    window.addInspectionLog = async function() {
+        const vehicle_id = document.getElementById('inspection_vehicle_select').value
+        const inspection_date = document.getElementById('insp_date').value
+        const expiry_date = document.getElementById('insp_expiry').value
+        const cost = document.getElementById('insp_cost').value
+        const fileInput = document.getElementById('report_file')
+
+        if (!vehicle_id || !inspection_date || !expiry_date) {
+            alert('Lütfen araç, muayene tarihi ve sonraki geçerlilik tarihini doldurun!')
+            return
+        }
+
+        let report_url = null
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0]
+            const fileName = `insp_${Date.now()}_${file.name}`
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('receipts')
+                .upload(fileName, file)
+
+            if (uploadError) {
+                alert('Rapor yüklenirken hata oluştu: ' + uploadError.message)
+                return
+            }
+
+            const { data: publicUrlData } = supabase.storage
+                .from('receipts')
+                .getPublicUrl(fileName)
+
+            report_url = publicUrlData.publicUrl
+        }
+
+        const { error } = await supabase.from('inspection_logs').insert([
+            { 
+                vehicle_id, 
+                inspection_date, 
+                expiry_date, 
+                cost: cost ? parseFloat(cost) : null, 
+                report_url 
+            }
+        ])
+
+        if (error) {
+            alert('Muayene kaydı başarısız: ' + error.message)
+        } else {
+            alert('Muayene kaydı başarıyla eklendi!')
+            document.getElementById('insp_date').value = ''
+            document.getElementById('insp_expiry').value = ''
+            document.getElementById('insp_cost').value = ''
+            document.getElementById('report_file').value = ''
+            fetchInspections()
+        }
+    }
+
+    // Tarih alanlarına bugünü varsayılan atama
     document.getElementById('log_date').valueAsDate = new Date()
+    document.getElementById('insp_date').valueAsDate = new Date()
 
     // Sayfa açılışında verileri yükle
     fetchVehicles()
     fetchLogs()
+    fetchInspections()
 </script>
 
 </body>
