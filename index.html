@@ -134,14 +134,14 @@
         .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
         .forgot-password a:hover { text-decoration: underline; }
 
-        #auth-container, #app-content { display: none; }
+        #auth-container, #update-password-container, #app-content { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     
-    <!-- GİRİŞ / KAYIT EKRANI -->
+    <!-- 1. GİRİŞ / KAYIT EKRANI -->
     <div id="auth-container">
         <div class="app-header" style="border:none; padding-bottom:0;">
             <h2>🚗 GarajDefteri</h2>
@@ -163,8 +163,21 @@
         </div>
     </div>
 
-    <!-- ANA UYGULAMA İÇERİĞİ -->
-    <div id="app-content" style="display: none;">
+    <!-- 2. MAİLDEN GELENLER İÇİN YENİ ŞİFRE BELİRLEME EKRANI -->
+    <div id="update-password-container">
+        <div class="app-header">
+            <h2>🔐 Yeni Şifre Belirle</h2>
+            <p>Hesabınız için yeni şifrenizi girin</p>
+        </div>
+        <div class="form-group">
+            <label>Yeni Şifre:</label>
+            <input type="password" id="new_password" placeholder="Yeni şifreniz">
+            <button onclick="handleUpdatePassword()" class="btn-secondary" style="margin-top: 10px;">Şifreyi Güncelle ve Giriş Yap</button>
+        </div>
+    </div>
+
+    <!-- 3. ANA UYGULAMA İÇERİĞİ -->
+    <div id="app-content">
         <div class="app-header">
             <h2>🚗 GarajDefteri</h2>
             <p>Mobil Garaj Yönetim Sistemi</p>
@@ -187,12 +200,6 @@
                 </div>
             </div>
             <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 8px; padding: 6px; font-size: 12px;">Tüm Zamanları Göster</button>
-        </div>
-
-        <div class="form-group">
-            <h3>🔐 Hesap Şifresini Değiştir</h3>
-            <input type="password" id="new_account_password" placeholder="Yeni şifrenizi girin">
-            <button onclick="updateAccountPassword()" class="btn-secondary">Şifreyi Güncelle</button>
         </div>
 
         <div class="form-group">
@@ -283,22 +290,24 @@
     let globalInsurances = []
 
     async function checkUserSession() {
-        if (window.location.hash) {
-            window.history.replaceState(null, null, window.location.pathname);
+        // E-postadaki şifre sıfırlama linkine tıklandığında gelen URL hash kontrolü
+        const hash = window.location.hash;
+        if (hash && (hash.includes('type=recovery') || hash.includes('access_token'))) {
+            document.getElementById('auth-container').style.display = 'none'
+            document.getElementById('app-content').style.display = 'none'
+            document.getElementById('update-password-container').style.display = 'block'
+            return;
         }
 
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (session) {
-                document.getElementById('auth-container').style.display = 'none'
-                document.getElementById('app-content').style.display = 'block'
-                loadAllData()
-            } else {
-                document.getElementById('auth-container').style.display = 'block'
-                document.getElementById('app-content').style.display = 'none'
-            }
-        } catch (e) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+            document.getElementById('auth-container').style.display = 'none'
+            document.getElementById('update-password-container').style.display = 'none'
+            document.getElementById('app-content').style.display = 'block'
+            loadAllData()
+        } else {
             document.getElementById('auth-container').style.display = 'block'
+            document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
         }
     }
@@ -321,24 +330,26 @@
 
     window.handleForgotPassword = async function() {
         const email = document.getElementById('auth_email').value
-        if (!email) { alert('Lütfen yukarıdaki kutuya şifresini unuttuğunuz e-posta adresinizi yazın!'); return; }
+        if (!email) { alert('Lütfen şifresini unuttuğunuz e-posta adresinizi üstteki kutuya yazın!'); return; }
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
         if (error) {
             alert('İşlem başarısız: ' + error.message)
         } else {
-            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! (Spam kutusunu kontrol etmeyi unutmayın)')
+            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! Gelen kutunuzu (veya spam klasörünü) kontrol edebilirsiniz.')
         }
     }
 
-    window.updateAccountPassword = async function() {
-        const newPassword = document.getElementById('new_account_password').value
+    window.handleUpdatePassword = async function() {
+        const newPassword = document.getElementById('new_password').value
         if (!newPassword) { alert('Lütfen yeni şifrenizi girin!'); return; }
+
         const { error } = await supabase.auth.updateUser({ password: newPassword })
         if (error) {
             alert('Şifre güncellenemedi: ' + error.message)
         } else {
-            alert('Şifreniz başarıyla değiştirildi!')
-            document.getElementById('new_account_password').value = ''
+            alert('Şifreniz başarıyla değiştirildi! Giriş yapıldı.')
+            window.location.hash = ''
+            checkUserSession()
         }
     }
 
