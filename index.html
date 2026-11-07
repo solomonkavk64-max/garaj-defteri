@@ -34,7 +34,7 @@
             background: var(--card-bg);
             padding: 16px;
             border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
             border: 1px solid var(--border);
         }
 
@@ -50,10 +50,6 @@
             margin: 0;
             color: var(--text-color);
             font-size: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
         .app-header p {
@@ -75,9 +71,6 @@
             margin-bottom: 12px;
             font-size: 15px;
             color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
 
         label {
@@ -100,11 +93,6 @@
             margin-bottom: 10px;
         }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
         button {
             width: 100%;
             padding: 11px;
@@ -116,46 +104,15 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 700;
-            transition: background 0.2s;
         }
 
-        button:active { transform: scale(0.98); }
         .btn-secondary { background: var(--primary); }
         .btn-inspection { background: var(--purple); }
         .btn-insurance { background: #d97706; }
         .btn-km { background: #0d9488; }
-        
-        .btn-danger { 
-            background: var(--danger); 
-            padding: 6px 12px; 
-            font-size: 12px; 
-            width: auto; 
-            margin-top: 8px; 
-            border-radius: 6px;
-        }
-
-        .btn-logout { 
-            background: var(--danger); 
-            width: auto; 
-            padding: 5px 10px; 
-            font-size: 11px; 
-            position: absolute; 
-            right: 0; 
-            top: 0; 
-        }
-
-        .btn-calendar { 
-            background: var(--accent); 
-            padding: 6px 10px; 
-            font-size: 12px; 
-            width: auto; 
-            margin-top: 8px; 
-            text-decoration: none; 
-            display: inline-block; 
-            color: #0f172a; 
-            border-radius: 6px; 
-            font-weight: bold; 
-        }
+        .btn-danger { background: var(--danger); padding: 6px 12px; font-size: 12px; width: auto; margin-top: 8px; border-radius: 6px; }
+        .btn-logout { background: var(--danger); width: auto; padding: 5px 10px; font-size: 11px; position: absolute; right: 0; top: 0; }
+        .btn-calendar { background: var(--accent); padding: 6px 10px; font-size: 12px; width: auto; margin-top: 8px; text-decoration: none; display: inline-block; color: #0f172a; border-radius: 6px; font-weight: bold; }
 
         .summary-box { 
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
@@ -167,8 +124,6 @@
             border: 1px solid var(--border);
         }
 
-        .summary-box h3 { color: var(--accent); margin-top: 0; font-size: 15px; }
-
         .alert-box { 
             background: rgba(239, 68, 68, 0.15); 
             border: 1px solid var(--danger);
@@ -177,7 +132,6 @@
             border-radius: 10px; 
             margin-bottom: 16px; 
             font-size: 13px; 
-            line-height: 1.4;
             display: none; 
         }
 
@@ -191,27 +145,24 @@
             border-radius: 10px; 
             border-left: 4px solid var(--primary); 
             font-size: 13px;
-            border-top: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+            border: 1px solid var(--border);
         }
         .log-card { border-left-color: var(--accent); }
         .inspection-card { border-left-color: var(--purple); }
         .insurance-card { border-left-color: #d97706; }
-
         .receipt-img { max-width: 100%; border-radius: 6px; margin-top: 8px; display: block; }
-
         .forgot-password { text-align: right; margin-top: -4px; margin-bottom: 12px; }
         .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
 
-        #app-content, #auth-container { display: none; }
+        /* Başlangıçta tüm ekranlar gizli, duruma göre açılacak */
+        #auth-container, #update-password-container, #app-content { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     
-    <!-- GİRİŞ / KAYIT EKRANI -->
+    <!-- 1. GİRİŞ / KAYIT EKRANI -->
     <div id="auth-container">
         <div class="app-header" style="border:none; padding-bottom:0;">
             <h2>🚗 GarajDefteri</h2>
@@ -233,7 +184,20 @@
         </div>
     </div>
 
-    <!-- ANA UYGULAMA İÇERİĞİ -->
+    <!-- 2. YENİ ŞİFRE BELİRLEME EKRANI (Maçtan gelenler için) -->
+    <div id="update-password-container">
+        <div class="app-header">
+            <h2>🔐 Yeni Şifre Belirle</h2>
+            <p>Lütfen hesabınız için yeni bir şifre girin</p>
+        </div>
+        <div class="form-group">
+            <label>Yeni Şifre:</label>
+            <input type="password" id="new_password" placeholder="Yeni şifreniz">
+            <button onclick="handleUpdatePassword()" class="btn-secondary" style="margin-top: 10px;">Şifreyi Güncelle ve Giriş Yap</button>
+        </div>
+    </div>
+
+    <!-- 3. ANA UYGULAMA İÇERİĞİ -->
     <div id="app-content">
         <div class="app-header">
             <h2>🚗 GarajDefteri</h2>
@@ -241,14 +205,11 @@
             <button onclick="handleLogout()" class="btn-logout">Çıkış</button>
         </div>
         
-        <!-- UYARI / HATIRLATICI KUTUSU -->
         <div id="alert-container" class="alert-box"></div>
 
-        <!-- TOPLAM MASRAF ÖZETİ VE TARİH FİLTRESİ -->
         <div class="summary-box">
             <h3>💰 Maliyet Özeti</h3>
             <p id="total-cost-display" style="font-size:14px; margin: 6px 0;">Toplam Masraf: Yükleniyor...</p>
-            
             <div class="date-filter-row">
                 <div style="flex:1;">
                     <label style="font-size: 10px; text-align: left; color: var(--text-muted);">Başlangıç:</label>
@@ -262,7 +223,6 @@
             <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 8px; padding: 6px; font-size: 12px;">Tüm Zamanları Göster</button>
         </div>
 
-        <!-- ARAÇ EKLEME FORMU -->
         <div class="form-group">
             <h3>➕ Yeni Araç Ekle</h3>
             <input type="text" id="brand" placeholder="Marka (Örn: Lada)">
@@ -273,97 +233,60 @@
             <button onclick="addVehicle()">Aracı Kaydet</button>
         </div>
 
-        <!-- KİLOMETRE GÜNCELLEME FORMU -->
         <div class="form-group">
             <h3>📊 KM Güncelle</h3>
             <label for="km_vehicle_select">Araç Seçin:</label>
-            <select id="km_vehicle_select">
-                <option value="">Araç yükleniyor...</option>
-            </select>
-            
+            <select id="km_vehicle_select"><option value="">Araç yükleniyor...</option></select>
             <input type="number" id="new_km" placeholder="Yeni Kilometre (Örn: 146200)">
             <button class="btn-km" onclick="updateVehicleKm()">Kilometreyi Güncelle</button>
         </div>
 
-        <!-- BAKIM / MASRAF EKLEME FORMU -->
         <div class="form-group">
             <h3>🔧 Bakım / Rutin Servis Ekle</h3>
             <label for="vehicle_select">Araç Seçin:</label>
-            <select id="vehicle_select">
-                <option value="">Araç yükleniyor...</option>
-            </select>
-            
-            <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yağ Değişimi, Balata)">
-            <input type="number" id="cost" placeholder="Tutar (TL) (Örn: 1500)">
-            <input type="number" id="log_km" placeholder="İşlem Anındaki KM (Örn: 145500)">
+            <select id="vehicle_select"><option value="">Araç yükleniyor...</option></select>
+            <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yağ Değişimi)">
+            <input type="number" id="cost" placeholder="Tutar (TL)">
+            <input type="number" id="log_km" placeholder="İşlem Anındaki KM">
             <input type="date" id="log_date">
-            
             <hr style="border:0; border-top:1px dashed var(--border); margin:10px 0;">
-            <label style="font-size:11px; color:var(--danger);">Sonraki Bakım Hatırlatıcısı (Opsiyonel):</label>
-            <input type="number" id="next_km" placeholder="Sonraki Bakım KM (Örn: 155000)">
+            <label style="font-size:11px; color:var(--danger);">Sonraki Bakım Hatırlatıcısı:</label>
+            <input type="number" id="next_km" placeholder="Sonraki Bakım KM">
             <input type="date" id="next_date">
-            
             <label for="receipt_file">Fiş / Fatura Fotoğrafı:</label>
             <input type="file" id="receipt_file" accept="image/*">
-            
             <button class="btn-secondary" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
         </div>
 
-        <!-- SİGORTA / KASKO EKLEME FORMU -->
         <div class="form-group">
             <h3>🛡️ Sigorta / Kasko Poliçesi Ekle</h3>
             <label for="insurance_vehicle_select">Araç Seçin:</label>
-            <select id="insurance_vehicle_select">
-                <option value="">Araç yükleniyor...</option>
-            </select>
-            
+            <select id="insurance_vehicle_select"><option value="">Araç yükleniyor...</option></select>
             <label>Poliçe Türü:</label>
-            <select id="insurance_type">
-                <option value="Kasko">Kasko</option>
-                <option value="Trafik Sigortası">Trafik Sigortası</option>
-            </select>
-
-            <input type="text" id="company_name" placeholder="Sigorta Şirketi (Örn: Anadolu Sigorta)">
-            
-            <label>Başlangıç Tarihi:</label>
-            <input type="date" id="ins_start_date">
-            
-            <label>Bitiş Tarihi:</label>
-            <input type="date" id="ins_expiry_date">
-            
+            <select id="insurance_type"><option value="Kasko">Kasko</option><option value="Trafik Sigortası">Trafik Sigortası</option></select>
+            <input type="text" id="company_name" placeholder="Sigorta Şirketi">
+            <label>Başlangıç Tarihi:</label><input type="date" id="ins_start_date">
+            <label>Bitiş Tarihi:</label><input type="date" id="ins_expiry_date">
             <input type="number" id="ins_cost" placeholder="Poliçe Ücreti (TL)">
-            
             <label for="policy_file">Poliçe Belgesi (Fotoğraf / PDF):</label>
             <input type="file" id="policy_file" accept="image/*,.pdf">
-            
             <button class="btn-insurance" onclick="addInsuranceLog()">Poliçeyi Kaydet</button>
         </div>
 
-        <!-- TÜVTÜRK MUAYENE EKLEME FORMU -->
         <div class="form-group">
             <h3>🔍 TÜVTÜRK Muayene Kaydı Ekle</h3>
             <label for="inspection_vehicle_select">Araç Seçin:</label>
-            <select id="inspection_vehicle_select">
-                <option value="">Araç yükleniyor...</option>
-            </select>
-            
-            <label>Muayene Tarihi:</label>
-            <input type="date" id="insp_date">
-            
-            <label>Sonraki Geçerlilik Tarihi:</label>
-            <input type="date" id="insp_expiry">
-            
+            <select id="inspection_vehicle_select"><option value="">Araç yükleniyor...</option></select>
+            <label>Muayene Tarihi:</label><input type="date" id="insp_date">
+            <label>Sonraki Geçerlilik Tarihi:</label><input type="date" id="insp_expiry">
             <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL)">
-            
             <label for="report_file">Muayene Raporu / Belge:</label>
             <input type="file" id="report_file" accept="image/*,.pdf">
-            
             <button class="btn-inspection" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
         </div>
 
         <hr style="margin: 20px 0; border:0; border-top:1px solid var(--border);">
 
-        <!-- LİSTELER -->
         <h3 style="font-size:14px; color:var(--text-muted); margin-bottom:6px;">Garajdaki Araçlarım</h3>
         <div id="vehicle-list">Yükleniyor...</div>
 
@@ -387,14 +310,26 @@
     let globalInspections = []
     let globalInsurances = []
 
+    // EKRAN KONTROLÜ VE MAİLDEN GELEN ŞİFRE SIFIRLAMA TESPİTİ
     async function checkUserSession() {
+        // URL içinde şifre sıfırlama hash'i (type=recovery) var mı kontrol et
+        const hash = window.location.hash;
+        if (hash && hash.includes('type=recovery')) {
+            document.getElementById('auth-container').style.display = 'none'
+            document.getElementById('app-content').style.display = 'none'
+            document.getElementById('update-password-container').style.display = 'block'
+            return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
             document.getElementById('auth-container').style.display = 'none'
+            document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'block'
             loadAllData()
         } else {
             document.getElementById('auth-container').style.display = 'block'
+            document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
         }
     }
@@ -420,6 +355,21 @@
         if (!email) { alert('Lütfen üstteki kutuya e-posta adresinizi yazın!'); return; }
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
         if (error) alert('İşlem başarısız: ' + error.message); else alert('Şifre sıfırlama bağlantısı e-postanıza gönderildi!');
+    }
+
+    // YENİ ŞİFREYİ KAYDETME FONKSİYONU
+    window.handleUpdatePassword = async function() {
+        const newPassword = document.getElementById('new_password').value
+        if (!newPassword) { alert('Lütfen yeni şifrenizi girin!'); return; }
+
+        const { error } = await supabase.auth.updateUser({ password: newPassword })
+        if (error) {
+            alert('Şifre güncellenemedi: ' + error.message)
+        } else {
+            alert('Şifreniz başarıyla değiştirildi! Giriş yapıldı.')
+            window.location.hash = '' // URL'deki recovery kodunu temizle
+            checkUserSession()
+        }
     }
 
     window.handleLogout = async function() {
@@ -752,7 +702,7 @@
             const fileName = `${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
             if (uploadError) { alert('Dosya yükleme hatası: ' + uploadError.message); return; }
-            const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
             receipt_url = publicUrlData.publicUrl
         }
 
@@ -774,7 +724,7 @@
             const fileName = `insp_${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
             if (uploadError) { alert('Dosya yükleme hatası: ' + uploadError.message); return; }
-            const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
             report_url = publicUrlData.publicUrl
         }
 
