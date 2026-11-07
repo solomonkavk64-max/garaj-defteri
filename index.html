@@ -387,8 +387,9 @@
             <input type="number" id="next_km" placeholder="Sonraki Bakım KM">
             <input type="date" id="next_date">
             
-            <label for="receipt_file">Fiş / Fatura Fotoğrafı (Dosya Seç veya Fotoğraf Çek):</label>
-            <input type="file" id="receipt_file" accept="image/*" capture="environment">
+            <label for="receipt_file">Fiş / Fatura (Fotoğraf Çek veya Dosya Seç):</label>
+            <!-- capture kaldırıldı, hem dosya/galeri hem de kamera seçeneği sunulur -->
+            <input type="file" id="receipt_file" accept="image/*,.pdf">
             
             <button class="btn-secondary" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
         </div>
@@ -404,8 +405,8 @@
             <label>Bitiş Tarihi:</label><input type="date" id="ins_expiry_date">
             <input type="number" id="ins_cost" placeholder="Poliçe Ücreti (TL)">
             
-            <label for="policy_file">Poliçe Belgesi (Dosya / Kamera):</label>
-            <input type="file" id="policy_file" accept="image/*,.pdf" capture="environment">
+            <label for="policy_file">Poliçe Belgesi (Fotoğraf / Dosya):</label>
+            <input type="file" id="policy_file" accept="image/*,.pdf">
             
             <button class="btn-insurance" onclick="addInsuranceLog()">Poliçeyi Kaydet</button>
         </div>
@@ -418,8 +419,8 @@
             <label>Sonraki Geçerlilik Tarihi:</label><input type="date" id="insp_expiry">
             <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL)">
             
-            <label for="report_file">Muayene Raporu (Dosya / Kamera):</label>
-            <input type="file" id="report_file" accept="image/*,.pdf" capture="environment">
+            <label for="report_file">Muayene Raporu (Fotoğraf / Dosya):</label>
+            <input type="file" id="report_file" accept="image/*,.pdf">
             
             <button class="btn-inspection" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
         </div>
@@ -503,8 +504,7 @@
     async function checkUserSession() {
         const hash = window.location.hash;
         const search = window.location.search;
-        
-        if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
+     if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
             (search && (search.includes('type=recovery') || search.includes('access_token')))) {
             document.getElementById('auth-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
