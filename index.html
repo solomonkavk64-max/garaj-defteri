@@ -290,9 +290,12 @@
     let globalInsurances = []
 
     async function checkUserSession() {
-        // E-postadaki şifre sıfırlama linkine tıklandığında gelen URL hash kontrolü
         const hash = window.location.hash;
-        if (hash && (hash.includes('type=recovery') || hash.includes('access_token'))) {
+        const search = window.location.search;
+        
+        // Hem # hash içinde hem de ? search içinde recovery / token parametresi var mı kontrol et
+        if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
+            (search && (search.includes('type=recovery') || search.includes('access_token')))) {
             document.getElementById('auth-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
             document.getElementById('update-password-container').style.display = 'block'
@@ -349,7 +352,8 @@
         } else {
             alert('Şifreniz başarıyla değiştirildi! Giriş yapıldı.')
             window.location.hash = ''
-            checkUserSession()
+            window.location.search = ''
+            window.location.href = window.location.pathname
         }
     }
 
