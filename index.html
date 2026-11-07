@@ -11,7 +11,6 @@
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
             --primary: #3b82f6;
-            --primary-hover: #2563eb;
             --accent: #f59e0b;
             --danger: #ef4444;
             --success: #10b981;
@@ -131,17 +130,15 @@
         .inspection-card { border-left-color: var(--purple); }
         .insurance-card { border-left-color: #d97706; }
         .receipt-img { max-width: 100%; border-radius: 6px; margin-top: 8px; display: block; }
-        .forgot-password { text-align: right; margin-top: -4px; margin-bottom: 12px; }
-        .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
 
-        #auth-container, #update-password-container, #app-content { display: none; }
+        #auth-container, #app-content { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     
-    <!-- 1. GİRİŞ / KAYIT EKRANI -->
+    <!-- GİRİŞ / KAYIT EKRANI -->
     <div id="auth-container">
         <div class="app-header" style="border:none; padding-bottom:0;">
             <h2>🚗 GarajDefteri</h2>
@@ -154,30 +151,12 @@
             <label>Şifre:</label>
             <input type="password" id="auth_password" placeholder="******">
             
-            <div class="forgot-password">
-                <a onclick="handleForgotPassword()">Şifremi Unuttum?</a>
-            </div>
-            
-            <button onclick="handleLogin()" class="btn-secondary">Giriş Yap</button>
+            <button onclick="handleLogin()" class="btn-secondary" style="margin-top: 10px;">Giriş Yap</button>
             <button onclick="handleSignup()" style="background: var(--purple); margin-top: 8px;">Kayıt Ol</button>
         </div>
     </div>
 
-    <!-- 2. YENİ ŞİFRE BELİRLEME EKRANI -->
-    <div id="update-password-container">
-        <div class="app-header">
-            <h2>🔐 Yeni Şifre Belirle</h2>
-            <p>Hesabınız için yeni şifrenizi girin</p>
-        </div>
-        <div class="form-group">
-            <label>Yeni Şifre:</label>
-            <input type="password" id="new_password" placeholder="Yeni şifreniz">
-            <button onclick="handleUpdatePassword()" class="btn-secondary" style="margin-top: 10px;">Şifreyi Güncelle</button>
-            <button onclick="cancelReset()" style="background: var(--danger); margin-top: 8px;">İptal / Giriş'e Dön</button>
-        </div>
-    </div>
-
-    <!-- 3. ANA UYGULAMA İÇERİĞİ -->
+    <!-- ANA UYGULAMA İÇERİĞİ -->
     <div id="app-content">
         <div class="app-header">
             <h2>🚗 GarajDefteri</h2>
@@ -201,6 +180,13 @@
                 </div>
             </div>
             <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 8px; padding: 6px; font-size: 12px;">Tüm Zamanları Göster</button>
+        </div>
+
+        <!-- ŞİFRE DEĞİŞTİRME ALANI -->
+        <div class="form-group">
+            <h3>🔐 Hesap Şifresini Değiştir</h3>
+            <input type="password" id="new_account_password" placeholder="Yeni şifrenizi girin">
+            <button onclick="updateAccountPassword()" class="btn-secondary">Şifreyi Güncelle</button>
         </div>
 
         <div class="form-group">
@@ -291,23 +277,13 @@
     let globalInsurances = []
 
     async function checkUserSession() {
-        const hash = window.location.hash;
-        if (hash && (hash.includes('type=recovery') || hash.includes('access_token'))) {
-            document.getElementById('auth-container').style.display = 'none'
-            document.getElementById('app-content').style.display = 'none'
-            document.getElementById('update-password-container').style.display = 'block'
-            return;
-        }
-
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
             document.getElementById('auth-container').style.display = 'none'
-            document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'block'
             loadAllData()
         } else {
             document.getElementById('auth-container').style.display = 'block'
-            document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
         }
     }
@@ -328,35 +304,15 @@
         if (error) alert('Kayıt başarısız: ' + error.message); else alert('Kayıt başarılı! Giriş yapabilirsiniz.');
     }
 
-    window.handleForgotPassword = async function() {
-        const email = document.getElementById('auth_email').value
-        if (!email) { alert('Lütfen e-posta adresinizi yazın!'); return; }
-        
-        // E-postaya gerek kalmadan veya linke tıklandığında token sorunu yaşanmaması için oturum açtırıp direkt şifre ekranına atabiliriz ya da mail gönderebiliriz.
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
-        if (error) {
-            alert('İşlem başarısız: ' + error.message)
-        } else {
-            alert('Şifre sıfırlama talebiniz alındı! E-postadaki linke tıklayabilir veya giriş yapabiliyorsanız giriş yapıp şifrenizi güncelleyebilirsiniz.')
-        }
-    }
-
-    window.cancelReset = function() {
-        window.location.hash = ''
-        checkUserSession()
-    }
-
-    window.handleUpdatePassword = async function() {
-        const newPassword = document.getElementById('new_password').value
+    window.updateAccountPassword = async function() {
+        const newPassword = document.getElementById('new_account_password').value
         if (!newPassword) { alert('Lütfen yeni şifrenizi girin!'); return; }
-
         const { error } = await supabase.auth.updateUser({ password: newPassword })
         if (error) {
             alert('Şifre güncellenemedi: ' + error.message)
         } else {
             alert('Şifreniz başarıyla değiştirildi!')
-            window.location.hash = ''
-            checkUserSession()
+            document.getElementById('new_account_password').value = ''
         }
     }
 
