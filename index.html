@@ -27,6 +27,72 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* 🚗 BAŞLANGIÇ ANİMASYONU (SPLASH SCREEN) STİLLERİ */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .splash-logo {
+            font-size: 55px;
+            animation: bounce 1s infinite alternate;
+        }
+
+        .splash-title {
+            margin-top: 15px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            letter-spacing: 0.5px;
+        }
+
+        .splash-subtitle {
+            margin-top: 5px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .loader-bar {
+            width: 150px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 4px;
+            margin-top: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loader-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            animation: loading 1.5s infinite linear;
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
         .container {
             max-width: 480px;
             margin: auto;
@@ -138,6 +204,14 @@
     </style>
 </head>
 <body>
+
+    <!-- BAŞLANGIÇ ANİMASYONU EKRANI -->
+    <div id="splash-screen">
+        <div class="splash-logo">🚗</div>
+        <div class="splash-title">GarajDefteri</div>
+        <div class="splash-subtitle">Mobil Garaj Yönetim Sistemi</div>
+        <div class="loader-bar"></div>
+    </div>
 
 <div class="container">
     
@@ -289,6 +363,17 @@
     let globalInspections = []
     let globalInsurances = []
 
+    // Animasyonu yumuşakça kaldıran fonksiyon
+    function hideSplashScreen() {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
+        }
+    }
+
     async function checkUserSession() {
         const hash = window.location.hash;
         const search = window.location.search;
@@ -298,6 +383,7 @@
             document.getElementById('auth-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
             document.getElementById('update-password-container').style.display = 'block'
+            hideSplashScreen();
             return;
         }
 
@@ -306,12 +392,13 @@
             document.getElementById('auth-container').style.display = 'none'
             document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'block'
-            loadAllData()
+            await loadAllData()
         } else {
             document.getElementById('auth-container').style.display = 'block'
             document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
         }
+        hideSplashScreen();
     }
 
     window.handleLogin = async function() {
@@ -361,11 +448,11 @@
         checkUserSession()
     }
 
-    function loadAllData() {
-        fetchVehicles()
-        fetchInsurances()
-        fetchLogs()
-        fetchInspections()
+    async function loadAllData() {
+        await fetchVehicles()
+        await fetchInsurances()
+        await fetchLogs()
+        await fetchInspections()
         document.getElementById('log_date').valueAsDate = new Date()
         document.getElementById('insp_date').valueAsDate = new Date()
         document.getElementById('ins_start_date').valueAsDate = new Date()
@@ -387,7 +474,7 @@
                     warningText += `🛡️ <strong>${vehicleName}</strong> ${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>`
                 } else if (diffDays < 0) {
                     hasWarning = true
-                    warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`
+                       warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`
                 }
             }
         })
@@ -718,12 +805,10 @@
 
     window.deleteVehicle = async function(id) {
         if (confirm('Aracı ve bu araca ait tüm bakım, sigorta ve muayene kayıtlarını silmek istediğinize emin misiniz?')) {
-            // Önce araca bağlı alt kayıtları temizle (Foreign key hatasını önlemek için)
             await supabase.from('maintenance_logs').delete().eq('vehicle_id', id);
             await supabase.from('insurance_logs').delete().eq('vehicle_id', id);
             await supabase.from('inspection_logs').delete().eq('vehicle_id', id);
 
-            // Sonra aracı sil
             const { error } = await supabase.from('vehicles').delete().eq('id', id)
             if (error) {
                 alert('Silme hatası: ' + error.message);
@@ -763,3 +848,4 @@
 
 </body>
 </html>
+      
