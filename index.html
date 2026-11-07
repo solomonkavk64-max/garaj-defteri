@@ -46,17 +46,8 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .app-header h2 {
-            margin: 0;
-            color: var(--text-color);
-            font-size: 22px;
-        }
-
-        .app-header p {
-            margin: 4px 0 0 0;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
+        .app-header h2 { margin: 0; color: var(--text-color); font-size: 22px; }
+        .app-header p { margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted); }
 
         .form-group {
             margin-bottom: 16px;
@@ -66,20 +57,9 @@
             border: 1px solid var(--border);
         }
 
-        .form-group h3 {
-            margin-top: 0;
-            margin-bottom: 12px;
-            font-size: 15px;
-            color: var(--accent);
-        }
+        .form-group h3 { margin-top: 0; margin-bottom: 12px; font-size: 15px; color: var(--accent); }
 
-        label {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
+        label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
 
         input, select {
             width: 100%;
@@ -154,7 +134,6 @@
         .forgot-password { text-align: right; margin-top: -4px; margin-bottom: 12px; }
         .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
 
-        /* Başlangıçta tüm ekranlar gizli, duruma göre açılacak */
         #auth-container, #update-password-container, #app-content { display: none; }
     </style>
 </head>
@@ -184,16 +163,17 @@
         </div>
     </div>
 
-    <!-- 2. YENİ ŞİFRE BELİRLEME EKRANI (Maçtan gelenler için) -->
+    <!-- 2. YENİ ŞİFRE BELİRLEME EKRANI -->
     <div id="update-password-container">
         <div class="app-header">
             <h2>🔐 Yeni Şifre Belirle</h2>
-            <p>Lütfen hesabınız için yeni bir şifre girin</p>
+            <p>Hesabınız için yeni şifrenizi girin</p>
         </div>
         <div class="form-group">
             <label>Yeni Şifre:</label>
             <input type="password" id="new_password" placeholder="Yeni şifreniz">
-            <button onclick="handleUpdatePassword()" class="btn-secondary" style="margin-top: 10px;">Şifreyi Güncelle ve Giriş Yap</button>
+            <button onclick="handleUpdatePassword()" class="btn-secondary" style="margin-top: 10px;">Şifreyi Güncelle</button>
+            <button onclick="cancelReset()" style="background: var(--danger); margin-top: 8px;">İptal / Giriş'e Dön</button>
         </div>
     </div>
 
@@ -310,11 +290,9 @@
     let globalInspections = []
     let globalInsurances = []
 
-    // EKRAN KONTROLÜ VE MAİLDEN GELEN ŞİFRE SIFIRLAMA TESPİTİ
     async function checkUserSession() {
-        // URL içinde şifre sıfırlama hash'i (type=recovery) var mı kontrol et
         const hash = window.location.hash;
-        if (hash && hash.includes('type=recovery')) {
+        if (hash && (hash.includes('type=recovery') || hash.includes('access_token'))) {
             document.getElementById('auth-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
             document.getElementById('update-password-container').style.display = 'block'
@@ -352,12 +330,22 @@
 
     window.handleForgotPassword = async function() {
         const email = document.getElementById('auth_email').value
-        if (!email) { alert('Lütfen üstteki kutuya e-posta adresinizi yazın!'); return; }
+        if (!email) { alert('Lütfen e-posta adresinizi yazın!'); return; }
+        
+        // E-postaya gerek kalmadan veya linke tıklandığında token sorunu yaşanmaması için oturum açtırıp direkt şifre ekranına atabiliriz ya da mail gönderebiliriz.
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
-        if (error) alert('İşlem başarısız: ' + error.message); else alert('Şifre sıfırlama bağlantısı e-postanıza gönderildi!');
+        if (error) {
+            alert('İşlem başarısız: ' + error.message)
+        } else {
+            alert('Şifre sıfırlama talebiniz alındı! E-postadaki linke tıklayabilir veya giriş yapabiliyorsanız giriş yapıp şifrenizi güncelleyebilirsiniz.')
+        }
     }
 
-    // YENİ ŞİFREYİ KAYDETME FONKSİYONU
+    window.cancelReset = function() {
+        window.location.hash = ''
+        checkUserSession()
+    }
+
     window.handleUpdatePassword = async function() {
         const newPassword = document.getElementById('new_password').value
         if (!newPassword) { alert('Lütfen yeni şifrenizi girin!'); return; }
@@ -366,8 +354,8 @@
         if (error) {
             alert('Şifre güncellenemedi: ' + error.message)
         } else {
-            alert('Şifreniz başarıyla değiştirildi! Giriş yapıldı.')
-            window.location.hash = '' // URL'deki recovery kodunu temizle
+            alert('Şifreniz başarıyla değiştirildi!')
+            window.location.hash = ''
             checkUserSession()
         }
     }
@@ -702,7 +690,7 @@
             const fileName = `${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
             if (uploadError) { alert('Dosya yükleme hatası: ' + uploadError.message); return; }
-            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
+            const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
             receipt_url = publicUrlData.publicUrl
         }
 
@@ -724,7 +712,7 @@
             const fileName = `insp_${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
             if (uploadError) { alert('Dosya yükleme hatası: ' + uploadError.message); return; }
-            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
+            const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
             report_url = publicUrlData.publicUrl
         }
 
