@@ -27,70 +27,92 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 🚗 BAŞLANGIÇ ANİMASYONU (SPLASH SCREEN) STİLLERİ */
+        /* 🚗 YARATICI BAŞLANGIÇ ANİMASYONU (SPLASH SCREEN) */
         #splash-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--bg-color);
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        .splash-icon-wrapper {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: enginePulse 2s infinite ease-in-out;
         }
 
         .splash-logo {
-            font-size: 55px;
-            animation: bounce 1s infinite alternate;
+            font-size: 45px;
+            animation: carDrive 1.5s infinite alternate ease-in-out;
         }
 
         .splash-title {
-            margin-top: 15px;
-            font-size: 24px;
-            font-weight: 700;
+            margin-top: 20px;
+            font-size: 26px;
+            font-weight: 800;
             color: var(--text-color);
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
         }
 
         .splash-subtitle {
-            margin-top: 5px;
+            margin-top: 6px;
             font-size: 13px;
             color: var(--text-muted);
+            letter-spacing: 0.5px;
         }
 
-        .loader-bar {
-            width: 150px;
-            height: 4px;
-            background: var(--border);
-            border-radius: 4px;
-            margin-top: 25px;
+        .loader-track {
+            width: 160px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-top: 30px;
             overflow: hidden;
+            border: 1px solid var(--border);
             position: relative;
         }
 
-        .loader-bar::after {
-            content: '';
+        .loader-thumb {
             position: absolute;
             top: 0;
-            left: -100%;
-            width: 100%;
+            left: 0;
             height: 100%;
-            background: var(--primary);
-            animation: loading 1.5s infinite linear;
+            width: 40%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 6px;
+            animation: speedometer 1.2s infinite ease-in-out;
         }
 
-        @keyframes bounce {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-10px); }
+        @keyframes enginePulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 25px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
 
-        @keyframes loading {
-            0% { left: -100%; }
-            100% { left: 100%; }
+        @keyframes carDrive {
+            0% { transform: scale(0.95) rotate(-2deg); }
+            100% { transform: scale(1.05) rotate(2deg); }
+        }
+
+        @keyframes speedometer {
+            0% { left: -40%; width: 30%; }
+            50% { width: 60%; }
+            100% { left: 100%; width: 30%; }
         }
 
         .container {
@@ -200,17 +222,75 @@
         .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
         .forgot-password a:hover { text-decoration: underline; }
 
+        /* Yasal & Destek Footer Alanı */
+        .legal-footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .legal-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 6px;
+            cursor: pointer;
+        }
+        .legal-footer a:hover { text-decoration: underline; }
+
+        /* Modal Pencereler */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: var(--text-color);
+            font-size: 13px;
+        }
+        .modal-content h3 { margin-top: 0; color: var(--accent); }
+        .close-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
         #auth-container, #update-password-container, #app-content { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- BAŞLANGIÇ ANİMASYONU EKRANI -->
+    <!-- YARATICI BAŞLANGIÇ ANİMASYONU EKRANI -->
     <div id="splash-screen">
-        <div class="splash-logo">🚗</div>
+        <div class="splash-icon-wrapper">
+            <div class="splash-logo">🚗</div>
+        </div>
         <div class="splash-title">GarajDefteri</div>
         <div class="splash-subtitle">Mobil Garaj Yönetim Sistemi</div>
-        <div class="loader-bar"></div>
+        <div class="loader-track">
+            <div class="loader-thumb"></div>
+        </div>
     </div>
 
 <div class="container">
@@ -306,8 +386,10 @@
             <label style="font-size:11px; color:var(--danger);">Sonraki Bakım Hatırlatıcısı:</label>
             <input type="number" id="next_km" placeholder="Sonraki Bakım KM">
             <input type="date" id="next_date">
-            <label for="receipt_file">Fiş / Fatura Fotoğrafı:</label>
-            <input type="file" id="receipt_file" accept="image/*">
+            
+            <label for="receipt_file">Fiş / Fatura Fotoğrafı (Dosya Seç veya Fotoğraf Çek):</label>
+            <input type="file" id="receipt_file" accept="image/*" capture="environment">
+            
             <button class="btn-secondary" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
         </div>
 
@@ -321,8 +403,10 @@
             <label>Başlangıç Tarihi:</label><input type="date" id="ins_start_date">
             <label>Bitiş Tarihi:</label><input type="date" id="ins_expiry_date">
             <input type="number" id="ins_cost" placeholder="Poliçe Ücreti (TL)">
-            <label for="policy_file">Poliçe Belgesi (Fotoğraf / PDF):</label>
-            <input type="file" id="policy_file" accept="image/*,.pdf">
+            
+            <label for="policy_file">Poliçe Belgesi (Dosya / Kamera):</label>
+            <input type="file" id="policy_file" accept="image/*,.pdf" capture="environment">
+            
             <button class="btn-insurance" onclick="addInsuranceLog()">Poliçeyi Kaydet</button>
         </div>
 
@@ -333,8 +417,10 @@
             <label>Muayene Tarihi:</label><input type="date" id="insp_date">
             <label>Sonraki Geçerlilik Tarihi:</label><input type="date" id="insp_expiry">
             <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL)">
-            <label for="report_file">Muayene Raporu / Belge:</label>
-            <input type="file" id="report_file" accept="image/*,.pdf">
+            
+            <label for="report_file">Muayene Raporu (Dosya / Kamera):</label>
+            <input type="file" id="report_file" accept="image/*,.pdf" capture="environment">
+            
             <button class="btn-inspection" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
         </div>
 
@@ -351,8 +437,42 @@
 
         <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">Son Bakım / Servis Kayıtları</h3>
         <div id="log-list">Yükleniyor...</div>
+
+        <!-- YASAL BİLDİRİMLER & DESTEK FOOTER -->
+        <div class="legal-footer">
+            <p>© 2026 GarajDefteri</p>
+            <a onclick="openModal('privacy-modal')">Gizlilik Politikası</a> | 
+            <a onclick="openModal('terms-modal')">Kullanım Koşulları</a> | 
+            <a onclick="openModal('contact-modal')">Görüş & Öneri</a>
+        </div>
     </div>
 
+</div>
+
+<!-- MODALLER (YASAL SAYFALAR) -->
+<div id="privacy-modal" class="modal">
+    <div class="modal-content">
+        <h3>🔒 Gizlilik Politikası</h3>
+        <p>GarajDefteri uygulaması, kullanıcıların araç bakım, sigorta ve masraf bilgilerini güvenli bir şekilde saklaması için tasarlanmıştır. E-posta adresiniz yalnızca hesap doğrulama ve şifre sıfırlama işlemleri için kullanılır, üçüncü şahıslarla asla paylaşılmaz.</p>
+        <button class="close-btn" onclick="closeModal('privacy-modal')">Kapat</button>
+    </div>
+</div>
+
+<div id="terms-modal" class="modal">
+    <div class="modal-content">
+        <h3>📜 Kullanım Koşulları</h3>
+        <p>Bu uygulamayı kullanarak girilen verilerin doğruluğundan kullanıcı sorumludur. Uygulama, hatırlatıcılar ve maliyet takibi konusunda yardımcı olmayı amaçlar; doğabilecek veri kayıplarından geliştirici sorumlu tutulamaz.</p>
+        <button class="close-btn" onclick="closeModal('terms-modal')">Kapat</button>
+    </div>
+</div>
+
+<div id="contact-modal" class="modal">
+    <div class="modal-content">
+        <h3>💬 Görüş, Öneri ve Şikayet</h3>
+        <p>Uygulamamızı geliştirmemiz için bize geri bildirimde bulunabilirsiniz:</p>
+        <p><strong>E-posta:</strong> destek@garajdefteri.com</p>
+        <button class="close-btn" onclick="closeModal('contact-modal')">Kapat</button>
+    </div>
 </div>
 
 <script type="module">
@@ -363,14 +483,20 @@
     let globalInspections = []
     let globalInsurances = []
 
-    // Animasyonu yumuşakça kaldıran fonksiyon
+    window.openModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+    window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
     function hideSplashScreen() {
         const splash = document.getElementById('splash-screen');
         if (splash) {
             splash.style.opacity = '0';
             setTimeout(() => {
                 splash.style.display = 'none';
-            }, 500);
+            }, 600);
         }
     }
 
@@ -474,7 +600,7 @@
                     warningText += `🛡️ <strong>${vehicleName}</strong> ${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>`
                 } else if (diffDays < 0) {
                     hasWarning = true
-                       warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`
+                    warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`
                 }
             }
         })
@@ -848,4 +974,3 @@
 
 </body>
 </html>
-      
