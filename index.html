@@ -2,40 +2,208 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Faruk'un GarajDefteri</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GarajDefteri</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2, h3 { color: #2c3e50; text-align: center; }
-        .form-group { margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, button { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
-        button { background: #27ae60; color: white; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #219653; }
-        .btn-secondary { background: #2980b9; }
-        .btn-secondary:hover { background: #1c5980; }
-        .btn-inspection { background: #8e44ad; }
-        .btn-inspection:hover { background: #732d91; }
-        .btn-insurance { background: #d35400; }
-        .btn-insurance:hover { background: #ba4a00; }
-        .btn-km { background: #16a085; }
-        .btn-km:hover { background: #138d75; }
-        .btn-danger { background: #c0392b; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 10px; }
-        .btn-danger:hover { background: #962d22; }
-        .btn-logout { background: #c0392b; width: auto; padding: 6px 12px; font-size: 13px; float: right; margin-top: -45px; }
-        .btn-calendar { background: #e67e22; padding: 6px 12px; font-size: 14px; width: auto; margin-top: 10px; text-decoration: none; display: inline-block; color: white; border-radius: 5px; font-weight: bold; }
-        .btn-calendar:hover { background: #d35400; }
-        .summary-box { background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .summary-box h3 { color: #f1c40f; margin-top: 0; }
-        .alert-box { background: #e74c3c; color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; display: none; }
-        .date-filter-row { display: flex; gap: 10px; margin-top: 10px; }
-        .date-filter-row input { margin-bottom: 0; background: white; color: #333; font-size: 14px; padding: 6px; }
-        .vehicle-card, .log-card, .inspection-card, .insurance-card { background: #ecf0f1; padding: 15px; margin-top: 10px; border-radius: 5px; border-left: 5px solid #2980b9; position: relative; }
-        .log-card { border-left-color: #e67e22; }
-        .inspection-card { border-left-color: #8e44ad; }
-        .insurance-card { border-left-color: #d35400; }
-        .receipt-img { max-width: 100%; border-radius: 5px; margin-top: 10px; display: block; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --purple: #8b5cf6;
+            --border: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            margin: 0;
+            padding: 12px;
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: auto;
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .app-header h2 {
+            margin: 0;
+            color: var(--text-color);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .app-header p {
+            margin: 4px 0 0 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .form-group h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            box-sizing: border-box;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 11px;
+            box-sizing: border-box;
+            background: var(--success);
+            color: white;
+            border: none;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background 0.2s;
+        }
+
+        button:active { transform: scale(0.98); }
+        .btn-secondary { background: var(--primary); }
+        .btn-inspection { background: var(--purple); }
+        .btn-insurance { background: #d97706; }
+        .btn-km { background: #0d9488; }
+        
+        .btn-danger { 
+            background: var(--danger); 
+            padding: 6px 12px; 
+            font-size: 12px; 
+            width: auto; 
+            margin-top: 8px; 
+            border-radius: 6px;
+        }
+
+        .btn-logout { 
+            background: var(--danger); 
+            width: auto; 
+            padding: 5px 10px; 
+            font-size: 11px; 
+            position: absolute; 
+            right: 0; 
+            top: 0; 
+        }
+
+        .btn-calendar { 
+            background: var(--accent); 
+            padding: 6px 10px; 
+            font-size: 12px; 
+            width: auto; 
+            margin-top: 8px; 
+            text-decoration: none; 
+            display: inline-block; 
+            color: #0f172a; 
+            border-radius: 6px; 
+            font-weight: bold; 
+        }
+
+        .summary-box { 
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+            color: var(--text-color); 
+            padding: 14px; 
+            border-radius: 12px; 
+            margin-bottom: 16px; 
+            text-align: center; 
+            border: 1px solid var(--border);
+        }
+
+        .summary-box h3 { color: var(--accent); margin-top: 0; font-size: 15px; }
+
+        .alert-box { 
+            background: rgba(239, 68, 68, 0.15); 
+            border: 1px solid var(--danger);
+            color: #fca5a5; 
+            padding: 10px; 
+            border-radius: 10px; 
+            margin-bottom: 16px; 
+            font-size: 13px; 
+            line-height: 1.4;
+            display: none; 
+        }
+
+        .date-filter-row { display: flex; gap: 8px; margin-top: 8px; }
+        .date-filter-row input { margin-bottom: 0; font-size: 12px; padding: 6px; }
+
+        .vehicle-card, .log-card, .inspection-card, .insurance-card { 
+            background: #0f172a; 
+            padding: 12px; 
+            margin-top: 10px; 
+            border-radius: 10px; 
+            border-left: 4px solid var(--primary); 
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .log-card { border-left-color: var(--accent); }
+        .inspection-card { border-left-color: var(--purple); }
+        .insurance-card { border-left-color: #d97706; }
+
+        .receipt-img { max-width: 100%; border-radius: 6px; margin-top: 8px; display: block; }
+
+        .forgot-password { text-align: right; margin-top: -4px; margin-bottom: 12px; }
+        .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
+
         #app-content, #auth-container { display: none; }
     </style>
 </head>
@@ -45,49 +213,58 @@
     
     <!-- GİRİŞ / KAYIT EKRANI -->
     <div id="auth-container">
-        <h2>🚗 Faruk'un GarajDefteri</h2>
-        <p style="text-align: center; color: #666;">Devam etmek için lütfen giriş yapın veya kayıt olun.</p>
-        <div class="form-group">
+        <div class="app-header" style="border:none; padding-bottom:0;">
+            <h2>🚗 GarajDefteri</h2>
+            <p>Aracınızın Dijital Geçmişi</p>
+        </div>
+        <div class="form-group" style="margin-top:20px;">
             <label>E-posta Adresi:</label>
             <input type="email" id="auth_email" placeholder="ornek@mail.com">
             
             <label>Şifre:</label>
             <input type="password" id="auth_password" placeholder="******">
             
+            <div class="forgot-password">
+                <a onclick="handleForgotPassword()">Şifremi Unuttum?</a>
+            </div>
+            
             <button onclick="handleLogin()" class="btn-secondary">Giriş Yap</button>
-            <button onclick="handleSignup()" style="background: #8e44ad; margin-top: 5px;">Kayıt Ol</button>
+            <button onclick="handleSignup()" style="background: var(--purple); margin-top: 8px;">Kayıt Ol</button>
         </div>
     </div>
 
-    <!-- ANA UYGULAMA İÇERİĞİ (Giriş yapınca görünür) -->
+    <!-- ANA UYGULAMA İÇERİĞİ -->
     <div id="app-content">
-        <h2>🚗 Faruk'un GarajDefteri</h2>
-        <button onclick="handleLogout()" class="btn-logout">Çıkış Yap</button>
+        <div class="app-header">
+            <h2>🚗 GarajDefteri</h2>
+            <p>Mobil Garaj Yönetim Sistemi</p>
+            <button onclick="handleLogout()" class="btn-logout">Çıkış</button>
+        </div>
         
         <!-- UYARI / HATIRLATICI KUTUSU -->
-        <div id="alert-container" class="alert-box" style="margin-top: 15px;"></div>
+        <div id="alert-container" class="alert-box"></div>
 
         <!-- TOPLAM MASRAF ÖZETİ VE TARİH FİLTRESİ -->
         <div class="summary-box">
             <h3>💰 Maliyet Özeti</h3>
-            <p id="total-cost-display">Toplam Masraf: Yükleniyor...</p>
+            <p id="total-cost-display" style="font-size:14px; margin: 6px 0;">Toplam Masraf: Yükleniyor...</p>
             
             <div class="date-filter-row">
                 <div style="flex:1;">
-                    <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Başlangıç:</label>
+                    <label style="font-size: 10px; text-align: left; color: var(--text-muted);">Başlangıç:</label>
                     <input type="date" id="filter_start_date" onchange="calculateTotalCost()">
                 </div>
                 <div style="flex:1;">
-                    <label style="font-size: 11px; text-align: left; margin-bottom: 2px; color: #ecf0f1;">Bitiş:</label>
+                    <label style="font-size: 10px; text-align: left; color: var(--text-muted);">Bitiş:</label>
                     <input type="date" id="filter_end_date" onchange="calculateTotalCost()">
                 </div>
             </div>
-            <button onclick="resetDateFilter()" style="background: #e74c3c; margin-top: 8px; padding: 6px; font-size: 13px;">Tüm Zamanları Göster</button>
+            <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 8px; padding: 6px; font-size: 12px;">Tüm Zamanları Göster</button>
         </div>
 
         <!-- ARAÇ EKLEME FORMU -->
         <div class="form-group">
-            <h3>Yeni Araç Ekle</h3>
+            <h3>➕ Yeni Araç Ekle</h3>
             <input type="text" id="brand" placeholder="Marka (Örn: Lada)">
             <input type="text" id="model" placeholder="Model (Örn: Samara)">
             <input type="number" id="year" placeholder="Yıl (Örn: 1990)">
@@ -116,13 +293,13 @@
                 <option value="">Araç yükleniyor...</option>
             </select>
             
-            <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yıllık Yağ Değişimi, Balata)">
+            <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yağ Değişimi, Balata)">
             <input type="number" id="cost" placeholder="Tutar (TL) (Örn: 1500)">
             <input type="number" id="log_km" placeholder="İşlem Anındaki KM (Örn: 145500)">
             <input type="date" id="log_date">
             
-            <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
-            <label style="font-size:13px; color:#c0392b;">Sonraki Bakım Hatırlatıcısı (İsteğe Bağlı):</label>
+            <hr style="border:0; border-top:1px dashed var(--border); margin:10px 0;">
+            <label style="font-size:11px; color:var(--danger);">Sonraki Bakım Hatırlatıcısı (Opsiyonel):</label>
             <input type="number" id="next_km" placeholder="Sonraki Bakım KM (Örn: 155000)">
             <input type="date" id="next_date">
             
@@ -148,10 +325,10 @@
 
             <input type="text" id="company_name" placeholder="Sigorta Şirketi (Örn: Anadolu Sigorta)">
             
-            <label>Poliçe Başlangıç Tarihi:</label>
+            <label>Başlangıç Tarihi:</label>
             <input type="date" id="ins_start_date">
             
-            <label>Poliçe Bitiş (Son Geçerlilik) Tarihi:</label>
+            <label>Bitiş Tarihi:</label>
             <input type="date" id="ins_expiry_date">
             
             <input type="number" id="ins_cost" placeholder="Poliçe Ücreti (TL)">
@@ -173,10 +350,10 @@
             <label>Muayene Tarihi:</label>
             <input type="date" id="insp_date">
             
-            <label>Sonraki Muayene Geçerlilik Tarihi:</label>
+            <label>Sonraki Geçerlilik Tarihi:</label>
             <input type="date" id="insp_expiry">
             
-            <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL) (İsteğe bağlı)">
+            <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL)">
             
             <label for="report_file">Muayene Raporu / Belge:</label>
             <input type="file" id="report_file" accept="image/*,.pdf">
@@ -184,19 +361,19 @@
             <button class="btn-inspection" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
         </div>
 
-        <hr style="margin: 30px 0;">
+        <hr style="margin: 20px 0; border:0; border-top:1px solid var(--border);">
 
         <!-- LİSTELER -->
-        <h3>Garajdaki Araçlarım</h3>
+        <h3 style="font-size:14px; color:var(--text-muted); margin-bottom:6px;">Garajdaki Araçlarım</h3>
         <div id="vehicle-list">Yükleniyor...</div>
 
-        <h3 style="margin-top: 30px;">🛡️ Sigorta & Kasko Poliçeleri</h3>
+        <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">🛡️ Sigorta & Kasko Poliçeleri</h3>
         <div id="insurance-list">Yükleniyor...</div>
 
-        <h3 style="margin-top: 30px;">🔍 Muayene Geçmişi</h3>
+        <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">🔍 Muayene Geçmişi</h3>
         <div id="inspection-list">Yükleniyor...</div>
 
-        <h3 style="margin-top: 30px;">Son Bakım / Servis Kayıtları</h3>
+        <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">Son Bakım / Servis Kayıtları</h3>
         <div id="log-list">Yükleniyor...</div>
     </div>
 
@@ -210,7 +387,6 @@
     let globalInspections = []
     let globalInsurances = []
 
-    // KULLANICI OTURUM KONTROLÜ
     async function checkUserSession() {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
@@ -226,35 +402,24 @@
     window.handleLogin = async function() {
         const email = document.getElementById('auth_email').value
         const password = document.getElementById('auth_password').value
-
-        if (!email || !password) {
-            alert('Lütfen e-posta ve şifrenizi girin!')
-            return
-        }
-
+        if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
         const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) {
-            alert('Giriş başarısız: ' + error.message)
-        } else {
-            checkUserSession()
-        }
+        if (error) alert('Giriş başarısız: ' + error.message); else checkUserSession();
     }
 
     window.handleSignup = async function() {
         const email = document.getElementById('auth_email').value
         const password = document.getElementById('auth_password').value
-
-        if (!email || !password) {
-            alert('Lütfen e-posta ve şifrenizi girin!')
-            return
-        }
-
+        if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
         const { error } = await supabase.auth.signUp({ email, password })
-        if (error) {
-            alert('Kayıt başarısız: ' + error.message)
-        } else {
-            alert('Kayıt başarılı! Giriş yapabilirsiniz.')
-        }
+        if (error) alert('Kayıt başarısız: ' + error.message); else alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+    }
+
+    window.handleForgotPassword = async function() {
+        const email = document.getElementById('auth_email').value
+        if (!email) { alert('Lütfen üstteki kutuya e-posta adresinizi yazın!'); return; }
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
+        if (error) alert('İşlem başarısız: ' + error.message); else alert('Şifre sıfırlama bağlantısı e-postanıza gönderildi!');
     }
 
     window.handleLogout = async function() {
@@ -283,7 +448,6 @@
                 const expiryDate = new Date(ins.expiry_date)
                 const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
                 const vehicleName = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
-
                 if (diffDays <= 15 && diffDays >= 0) {
                     hasWarning = true
                     warningText += `🛡️ <strong>${vehicleName}</strong> ${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>`
@@ -299,7 +463,6 @@
                 const expiryDate = new Date(insp.expiry_date)
                 const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
                 const vehicleName = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
-
                 if (diffDays <= 30 && diffDays >= 0) {
                     hasWarning = true
                     warningText += `⚠️ <strong>${vehicleName}</strong> muayenesine <strong>${diffDays} gün</strong> kaldı!<br>`
@@ -313,7 +476,6 @@
         globalMaintenance.forEach(log => {
             const vehicle = globalVehicles.find(v => v.id === log.vehicle_id)
             const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
-
             if (log.next_date) {
                 const nextDate = new Date(log.next_date)
                 const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24))
@@ -325,7 +487,6 @@
                     warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihi <strong>geldi/geçti!</strong><br>`
                 }
             }
-
             if (log.next_km && vehicle && vehicle.current_km) {
                 const kmDiff = log.next_km - vehicle.current_km
                 if (kmDiff <= 1000 && kmDiff >= 0) {
@@ -355,7 +516,6 @@
         const costDisplay = document.getElementById('total-cost-display')
         const startDateVal = document.getElementById('filter_start_date').value
         const endDateVal = document.getElementById('filter_end_date').value
-
         const startDate = startDateVal ? new Date(startDateVal) : null
         const endDate = endDateVal ? new Date(endDateVal) : null
 
@@ -394,7 +554,7 @@
         if (startDateVal && endDateVal) infoText = `${startDateVal} - ${endDateVal}`
 
         costDisplay.innerHTML = `Harcama (${infoText}): <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
-            <span style="font-size: 13px; color: #bdc3c7;">(Bakım: ${totalMaint.toLocaleString('tr-TR')} TL | Muayene: ${totalInsp.toLocaleString('tr-TR')} TL | Sigorta: ${totalIns.toLocaleString('tr-TR')} TL)</span>`
+            <span style="font-size: 11px; color: var(--text-muted);">(Bakım: ${totalMaint.toLocaleString('tr-TR')} | Muayene: ${totalInsp.toLocaleString('tr-TR')} | Sigorta: ${totalIns.toLocaleString('tr-TR')})</span>`
     }
 
     window.resetDateFilter = function() {
@@ -411,7 +571,6 @@
         const insSelectBox = document.getElementById('insurance_vehicle_select')
         
         const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
-
         if (error) { listDiv.innerHTML = 'Hata: ' + error.message; return; }
 
         globalVehicles = data || []
@@ -443,7 +602,6 @@
     async function fetchInsurances() {
         const insDiv = document.getElementById('insurance-list')
         const { data, error } = await supabase.from('insurance_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
-
         if (error) { insDiv.innerHTML = 'Sigortalar yüklenemedi: ' + error.message; return; }
 
         globalInsurances = data || []
@@ -456,14 +614,14 @@
             const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
             const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : ''
             const companyInfo = ins.company_name ? ` (${ins.company_name})` : ''
-            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank">📄 Poliçe Belgesini Görüntüle</a>` : ''
-            const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} geçerlilik süresi bugün sona eriyor!`)
+            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" style="color:var(--primary);">📄 Poliçe Belgesini Görüntüle</a>` : ''
+            const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`)
 
             insDiv.innerHTML += `
                 <div class="insurance-card">
                     <strong>${vehicleInfo} - ${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
                     Başlangıç: ${ins.start_date} | <strong>Bitiş: ${ins.expiry_date}</strong>${reportHtml}<br>
-                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle / Hatırlatıcı Kur</a>
+                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>
                     <br><button class="btn-danger" onclick="deleteInsurance('${ins.id}')">Poliçeyi Sil</button>
                 </div>
             `
@@ -474,7 +632,6 @@
     async function fetchLogs() {
         const logDiv = document.getElementById('log-list')
         const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false })
-
         if (error) { logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message; return; }
 
         globalMaintenance = data || []
@@ -486,12 +643,12 @@
         globalMaintenance.forEach(log => {
             const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
             const imgHtml = log.receipt_url ? `<br><img src="${log.receipt_url}" class="receipt-img">` : ''
-            const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:#c0392b; font-size:13px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : ''
+            const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : ''
             
             let calBtn = ''
             if (log.next_date) {
-                const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım Hatırlatıcı (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} aracınızın ${log.title} bakım zamanı geldi!`)
-                calBtn = `<br><a href="${calUrl}" target="_blank" class="btn-calendar">📅 Bakımı Takvime Ekle</a>`
+                const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} bakım zamanı!`)
+                calBtn = `<br><a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>`
             }
 
             logDiv.innerHTML += `
@@ -509,7 +666,6 @@
     async function fetchInspections() {
         const inspDiv = document.getElementById('inspection-list')
         const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
-
         if (error) { inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message; return; }
 
         globalInspections = data || []
@@ -521,14 +677,14 @@
         globalInspections.forEach(insp => {
             const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
             const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
-            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank">📄 Muayene Raporunu Görüntüle</a>` : ''
-            const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi sona eriyor!`)
+            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" style="color:var(--primary);">📄 Muayene Raporu</a>` : ''
+            const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi bitiyor!`)
 
             inspDiv.innerHTML += `
                 <div class="inspection-card">
-                    <strong>${vehicleInfo} - Muayene Kaydı</strong>${costInfo}<br>
-                    Muayene Tarihi: ${insp.inspection_date} | <strong>Son Geçerlilik: ${insp.expiry_date}</strong>${reportHtml}<br>
-                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle / Hatırlatıcı Kur</a>
+                    <strong>${vehicleInfo} - Muayene</strong>${costInfo}<br>
+                    Tarih: ${insp.inspection_date} | <strong>Son Geçerlilik: ${insp.expiry_date}</strong>${reportHtml}<br>
+                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>
                     <br><button class="btn-danger" onclick="deleteInspection('${insp.id}')">Muayene Kaydını Sil</button>
                 </div>
             `
@@ -542,22 +698,17 @@
         const year = document.getElementById('year').value
         const current_km = document.getElementById('current_km').value
         const plate = document.getElementById('plate').value
-
         if (!brand || !model || !current_km) { alert('Lütfen marka, model ve kilometre alanlarını doldurun!'); return; }
-
         const { error } = await supabase.from('vehicles').insert([{ brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }])
-        if (error) alert('Kayıt başarısız: ' + error.message);
-        else { alert('Araç eklendi!'); document.getElementById('brand').value = ''; document.getElementById('model').value = ''; document.getElementById('year').value = ''; document.getElementById('current_km').value = ''; document.getElementById('plate').value = ''; fetchVehicles(); }
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Araç eklendi!'); document.getElementById('brand').value = ''; document.getElementById('model').value = ''; document.getElementById('year').value = ''; document.getElementById('current_km').value = ''; document.getElementById('plate').value = ''; fetchVehicles(); }
     }
 
     window.updateVehicleKm = async function() {
         const vehicle_id = document.getElementById('km_vehicle_select').value
         const new_km = document.getElementById('new_km').value
-        if (!vehicle_id || !new_km) { alert('Lütfen araç seçin ve yeni kilometreyi girin!'); return; }
-
+        if (!vehicle_id || !new_km) { alert('Lütfen araç seçin ve yeni KM girin!'); return; }
         const { error } = await supabase.from('vehicles').update({ current_km: parseInt(new_km) }).eq('id', vehicle_id)
-        if (error) alert('Kilometre güncellenemedi: ' + error.message);
-        else { alert('Kilometre güncellendi!'); document.getElementById('new_km').value = ''; fetchVehicles(); fetchLogs(); }
+        if (error) alert('Güncellenemedi: ' + error.message); else { alert('KM güncellendi!'); document.getElementById('new_km').value = ''; fetchVehicles(); fetchLogs(); }
     }
 
     window.addInsuranceLog = async function() {
@@ -568,31 +719,20 @@
         const expiry_date = document.getElementById('ins_expiry_date').value
         const cost = document.getElementById('ins_cost').value
         const fileInput = document.getElementById('policy_file')
-
-        if (!vehicle_id || !start_date || !expiry_date) { alert('Lütfen araç, başlangıç ve bitiş tarihlerini doldurun!'); return; }
+        if (!vehicle_id || !start_date || !expiry_date) { alert('Lütfen araç ve tarih alanlarını doldurun!'); return; }
 
         let policy_url = null
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0]
             const fileName = `ins_${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
-            if (uploadError) { alert('Poliçe dosyası yüklenirken hata: ' + uploadError.message); return; }
+            if (uploadError) { alert('Dosya yükleme hatası: ' + uploadError.message); return; }
             const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
             policy_url = publicUrlData.publicUrl
         }
 
-        const { error } = await supabase.from('insurance_logs').insert([{ 
-            vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url 
-        }])
-
-        if (error) alert('Poliçe kaydı başarısız: ' + error.message);
-        else { 
-            alert('Sigorta/Kasko poliçesi başarıyla eklendi!'); 
-            document.getElementById('company_name').value = ''; 
-            document.getElementById('ins_cost').value = ''; 
-            document.getElementById('policy_file').value = ''; 
-            fetchInsurances(); 
-        }
+        const { error } = await supabase.from('insurance_logs').insert([{ vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url }])
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Poliçe eklendi!'); document.getElementById('company_name').value = ''; document.getElementById('ins_cost').value = ''; document.getElementById('policy_file').value = ''; fetchInsurances(); }
     }
 
     window.addMaintenanceLog = async function() {
@@ -604,29 +744,20 @@
         const next_km = document.getElementById('next_km').value
         const next_date = document.getElementById('next_date').value
         const fileInput = document.getElementById('receipt_file')
-
-        if (!vehicle_id || !title || !cost) { alert('Lütfen araç, işlem tanımı ve tutar alanlarını doldurun!'); return; }
+        if (!vehicle_id || !title || !cost) { alert('Lütfen zorunlu alanları doldurun!'); return; }
 
         let receipt_url = null
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0]
             const fileName = `${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
-            if (uploadError) { alert('Fiş yüklenirken hata: ' + uploadError.message); return; }
+            if (uploadError) { alert('Dosya yükleme hatası: ' + uploadError.message); return; }
             const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
             receipt_url = publicUrlData.publicUrl
         }
 
-        const { error } = await supabase.from('maintenance_logs').insert([{ 
-            vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, next_km: next_km ? parseInt(next_km) : null, next_date: next_date || null, receipt_url 
-        }])
-
-        if (error) alert('Bakım kaydı başarısız: ' + error.message);
-        else { 
-            alert('Bakım kaydı eklendi!'); 
-            document.getElementById('title').value = ''; document.getElementById('cost').value = ''; document.getElementById('log_km').value = ''; document.getElementById('next_km').value = ''; document.getElementById('next_date').value = ''; document.getElementById('receipt_file').value = ''; 
-            fetchLogs(); 
-        }
+        const { error } = await supabase.from('maintenance_logs').insert([{ vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, next_km: next_km ? parseInt(next_km) : null, next_date: next_date || null, receipt_url }])
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Bakım eklendi!'); document.getElementById('title').value = ''; document.getElementById('cost').value = ''; document.getElementById('log_km').value = ''; document.getElementById('next_km').value = ''; document.getElementById('next_date').value = ''; document.getElementById('receipt_file').value = ''; fetchLogs(); }
     }
 
     window.addInspectionLog = async function() {
@@ -635,22 +766,20 @@
         const expiry_date = document.getElementById('insp_expiry').value
         const cost = document.getElementById('insp_cost').value
         const fileInput = document.getElementById('report_file')
-
-        if (!vehicle_id || !inspection_date || !expiry_date) { alert('Lütfen araç, muayene tarihi ve sonraki geçerlilik tarihini doldurun!'); return; }
+        if (!vehicle_id || !inspection_date || !expiry_date) { alert('Lütfen tarih alanlarını doldurun!'); return; }
 
         let report_url = null
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0]
             const fileName = `insp_${Date.now()}_${file.name}`
             const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
-            if (uploadError) { alert('Rapor yüklenirken hata: ' + uploadError.message); return; }
+            if (uploadError) { alert('Dosya yükleme hatası: ' + uploadError.message); return; }
             const { data: publicUrlData } = await supabase.storage.from('receipts').getPublicUrl(fileName)
             report_url = publicUrlData.publicUrl
         }
 
         const { error } = await supabase.from('inspection_logs').insert([{ vehicle_id, inspection_date, expiry_date, cost: cost ? parseFloat(cost) : null, report_url }])
-        if (error) alert('Muayene kaydı başarısız: ' + error.message);
-        else { alert('Muayene kaydı eklendi!'); document.getElementById('insp_date').value = ''; document.getElementById('insp_expiry').value = ''; document.getElementById('insp_cost').value = ''; document.getElementById('report_file').value = ''; fetchInspections(); }
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Muayene eklendi!'); document.getElementById('insp_date').value = ''; document.getElementById('insp_expiry').value = ''; document.getElementById('insp_cost').value = ''; document.getElementById('report_file').value = ''; fetchInspections(); }
     }
 
     window.deleteVehicle = async function(id) {
@@ -661,27 +790,26 @@
     }
 
     window.deleteInsurance = async function(id) {
-        if (confirm('Sigorta poliçesini silmek istediğinize emin misiniz?')) {
+        if (confirm('Silmek istediğinize emin misiniz?')) {
             const { error } = await supabase.from('insurance_logs').delete().eq('id', id)
             if (error) alert('Silme hatası: ' + error.message); else fetchInsurances();
         }
     }
 
     window.deleteLog = async function(id) {
-        if (confirm('Bakım kaydını silmek istediğinize emin misiniz?')) {
+        if (confirm('Silmek istediğinize emin misiniz?')) {
             const { error } = await supabase.from('maintenance_logs').delete().eq('id', id)
             if (error) alert('Silme hatası: ' + error.message); else fetchLogs();
         }
     }
 
     window.deleteInspection = async function(id) {
-        if (confirm('Muayene kaydını silmek istediğinize emin misiniz?')) {
+        if (confirm('Silmek istediğinize emin misiniz?')) {
             const { error } = await supabase.from('inspection_logs').delete().eq('id', id)
             if (error) alert('Silme hatası: ' + error.message); else fetchInspections();
         }
     }
 
-    // Uygulama açıldığında oturumu kontrol et
     checkUserSession()
 </script>
 
