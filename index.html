@@ -293,7 +293,6 @@
         const hash = window.location.hash;
         const search = window.location.search;
         
-        // Hem # hash içinde hem de ? search içinde recovery / token parametresi var mı kontrol et
         if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
             (search && (search.includes('type=recovery') || search.includes('access_token')))) {
             document.getElementById('auth-container').style.display = 'none'
@@ -718,9 +717,23 @@
     }
 
     window.deleteVehicle = async function(id) {
-        if (confirm('Aracı silmek istediğinize emin misiniz?')) {
+        if (confirm('Aracı ve bu araca ait tüm bakım, sigorta ve muayene kayıtlarını silmek istediğinize emin misiniz?')) {
+            // Önce araca bağlı alt kayıtları temizle (Foreign key hatasını önlemek için)
+            await supabase.from('maintenance_logs').delete().eq('vehicle_id', id);
+            await supabase.from('insurance_logs').delete().eq('vehicle_id', id);
+            await supabase.from('inspection_logs').delete().eq('vehicle_id', id);
+
+            // Sonra aracı sil
             const { error } = await supabase.from('vehicles').delete().eq('id', id)
-            if (error) alert('Silme hatası: ' + error.message); else { fetchVehicles(); fetchInsurances(); fetchLogs(); fetchInspections(); }
+            if (error) {
+                alert('Silme hatası: ' + error.message);
+            } else { 
+                alert('Araç başarıyla silindi.');
+                fetchVehicles(); 
+                fetchInsurances(); 
+                fetchLogs(); 
+                fetchInspections(); 
+            }
         }
     }
 
