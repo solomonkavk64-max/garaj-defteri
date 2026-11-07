@@ -130,10 +130,6 @@
         .inspection-card { border-left-color: var(--purple); }
         .insurance-card { border-left-color: #d97706; }
         .receipt-img { max-width: 100%; border-radius: 6px; margin-top: 8px; display: block; }
-        
-        .forgot-password { text-align: right; margin-top: -4px; margin-bottom: 12px; }
-        .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
-        .forgot-password a:hover { text-decoration: underline; }
 
         #auth-container, #app-content { display: none; }
     </style>
@@ -155,11 +151,7 @@
             <label>Şifre:</label>
             <input type="password" id="auth_password" placeholder="******">
             
-            <div class="forgot-password">
-                <a onclick="handleForgotPassword()">Şifremi Unuttum?</a>
-            </div>
-            
-            <button onclick="handleLogin()" class="btn-secondary">Giriş Yap</button>
+            <button onclick="handleLogin()" class="btn-secondary" style="margin-top: 10px;">Giriş Yap</button>
             <button onclick="handleSignup()" style="background: var(--purple); margin-top: 8px;">Kayıt Ol</button>
         </div>
     </div>
@@ -285,6 +277,11 @@
     let globalInsurances = []
 
     async function checkUserSession() {
+        // URL'de kalan eski hata veya sıfırlama token kalıntılarını temizle
+        if (window.location.hash) {
+            window.history.replaceState(null, null, window.location.pathname);
+        }
+
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
             document.getElementById('auth-container').style.display = 'none'
@@ -310,19 +307,6 @@
         if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) alert('Kayıt başarısız: ' + error.message); else alert('Kayıt başarılı! Giriş yapabilirsiniz.');
-    }
-
-    window.handleForgotPassword = async function() {
-        const email = document.getElementById('auth_email').value
-        if (!email) { alert('Lütfen önce yukarıdaki kutuya e-posta adresinizi yazın!'); return; }
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + window.location.pathname
-        })
-        if (error) {
-            alert('İşlem başarısız: ' + error.message)
-        } else {
-            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! Lütfen gelen kutunuzu (veya spam klasörünü) kontrol edin.')
-        }
     }
 
     window.updateAccountPassword = async function() {
@@ -448,6 +432,15 @@
 
         let totalInsp = 0
         globalInspections.forEach(item => {
+            const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
+            let pass = true
+            if (startDate && itemDate && itemDate < startDate) pass = false
+            if (endDate && itemDate && itemDate > endDate) pass = false
+            if (pass) totalInsp += parseFloat(item.cost) || 0
+        })
+
+        let totalIns = 0
+        globalInsurances.forEach(item => {
             const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
             let pass = true
             if (startDate && itemDate && itemDate < startDate) pass = false
@@ -730,4 +723,3 @@
 
 </body>
 </html>
-   
