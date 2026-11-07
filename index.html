@@ -130,8 +130,6 @@
         .inspection-card { border-left-color: var(--purple); }
         .insurance-card { border-left-color: #d97706; }
         .receipt-img { max-width: 100%; border-radius: 6px; margin-top: 8px; display: block; }
-
-        #auth-container, #app-content { display: none; }
     </style>
 </head>
 <body>
@@ -157,7 +155,7 @@
     </div>
 
     <!-- ANA UYGULAMA İÇERİĞİ -->
-    <div id="app-content">
+    <div id="app-content" style="display: none;">
         <div class="app-header">
             <h2>🚗 GarajDefteri</h2>
             <p>Mobil Garaj Yönetim Sistemi</p>
@@ -182,7 +180,6 @@
             <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 8px; padding: 6px; font-size: 12px;">Tüm Zamanları Göster</button>
         </div>
 
-        <!-- ŞİFRE DEĞİŞTİRME ALANI -->
         <div class="form-group">
             <h3>🔐 Hesap Şifresini Değiştir</h3>
             <input type="password" id="new_account_password" placeholder="Yeni şifrenizi girin">
@@ -277,17 +274,17 @@
     let globalInsurances = []
 
     async function checkUserSession() {
-        // URL'de kalan eski hata veya sıfırlama token kalıntılarını temizle
-        if (window.location.hash) {
-            window.history.replaceState(null, null, window.location.pathname);
-        }
-
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-            document.getElementById('auth-container').style.display = 'none'
-            document.getElementById('app-content').style.display = 'block'
-            loadAllData()
-        } else {
+        try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                document.getElementById('auth-container').style.display = 'none'
+                document.getElementById('app-content').style.display = 'block'
+                loadAllData()
+            } else {
+                document.getElementById('auth-container').style.display = 'block'
+                document.getElementById('app-content').style.display = 'none'
+            }
+        } catch (e) {
             document.getElementById('auth-container').style.display = 'block'
             document.getElementById('app-content').style.display = 'none'
         }
@@ -432,15 +429,6 @@
 
         let totalInsp = 0
         globalInspections.forEach(item => {
-            const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
-            let pass = true
-            if (startDate && itemDate && itemDate < startDate) pass = false
-            if (endDate && itemDate && itemDate > endDate) pass = false
-            if (pass) totalInsp += parseFloat(item.cost) || 0
-        })
-
-        let totalIns = 0
-        globalInsurances.forEach(item => {
             const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
             let pass = true
             if (startDate && itemDate && itemDate < startDate) pass = false
