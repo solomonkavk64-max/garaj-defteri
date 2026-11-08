@@ -3,5 +3,5 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Temel fetch isteği
+  // Temel fetch yakalama
 });
