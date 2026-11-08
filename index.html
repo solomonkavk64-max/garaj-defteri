@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GarajDefteri</title>
     <!-- 🖼️ PWA VE LOGO ENTEGRASYONU -->
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="/garaj-defteri/icon-yeni.png">
+    <link rel="apple-touch-icon" href="/garaj-defteri/icon-yeni.png">
+    <link rel="manifest" href="/garaj-defteri/manifest.json">
     
     <style>
         :root {
@@ -55,7 +55,6 @@
             overflow: hidden;
         }
 
-        /* Arka plan hareketli neon ışık hüzmeleri */
         #splash-screen::before {
             content: '';
             position: absolute;
@@ -86,7 +85,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scale(1.15); /* Kenarlardaki olası siyah boşlukları zoom yaparak yok eder */
+            transform: scale(1.15);
             animation: carDrive 1.2s infinite alternate ease-in-out;
         }
 
@@ -155,7 +154,6 @@
             100% { left: 100%; width: 30%; }
         }
 
-        /* 🎨 ANA UYGULAMA CONTAINER VE KARTLAR */
         .container {
             max-width: 480px;
             margin: auto;
@@ -168,7 +166,6 @@
             box-sizing: border-box;
         }
 
-        /* 🌟 GİRİŞ EKRANI ÖZEL CANLI DÜZENİ */
         #auth-container {
             text-align: center;
             padding: 10px 5px;
@@ -182,7 +179,7 @@
             border-radius: 24px;
             display: inline-block;
             box-shadow: 0 0 25px var(--primary-glow);
-            transform: scale(1.15); /* İçeriği alanı tam kaplayacak şekilde büyütür */
+            transform: scale(1.15);
         }
 
         .app-header {
@@ -358,10 +355,9 @@
 </head>
 <body>
 
-    <!-- ULTRA CANLI BAŞLANGIÇ ANİMASYONU EKRANI (LOGOLU) -->
     <div id="splash-screen">
         <div class="splash-icon-wrapper">
-            <img src="icon.png" alt="GarajDefteri Logo" class="splash-logo-img">
+            <img src="/garaj-defteri/icon-yeni.png" alt="GarajDefteri Logo" class="splash-logo-img">
         </div>
         <div class="splash-title">GarajDefteri</div>
         <div class="splash-subtitle">Mobil Garaj Yönetim Sistemi</div>
@@ -372,9 +368,8 @@
 
 <div class="container">
     
-    <!-- 1. GİRİŞ / KAYIT EKRANI (LOGOLU) -->
     <div id="auth-container">
-        <img src="icon.png" alt="GarajDefteri Logo" class="auth-hero-icon">
+        <img src="/garaj-defteri/icon-yeni.png" alt="GarajDefteri Logo" class="auth-hero-icon">
         <h2 style="color: var(--text-color); font-size: 24px; margin: 0 0 6px 0;">GarajDefteri</h2>
         <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 24px 0;">Aracınızın Tüm Geçmişi Parmaklarınızın Ucunda</p>
         
@@ -394,7 +389,6 @@
         </div>
     </div>
 
-    <!-- 2. MAİLDEN GELENLER İÇİN YENİ ŞİFRE BELİRLEME EKRANI -->
     <div id="update-password-container">
         <div class="app-header">
             <h2>🔐 Yeni Şifre Belirle</h2>
@@ -407,7 +401,6 @@
         </div>
     </div>
 
-    <!-- 3. ANA UYGULAMA İÇERİĞİ -->
     <div id="app-content">
         <div class="app-header">
             <h2>🚗 GarajDefteri</h2>
@@ -515,7 +508,6 @@
         <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">Son Bakım / Servis Kayıtları</h3>
         <div id="log-list">Yükleniyor...</div>
 
-        <!-- YASAL BİLDİRİMLER & DESTEK FOOTER -->
         <div class="legal-footer">
             <p>© 2026 GarajDefteri</p>
             <a onclick="openModal('privacy-modal')">Gizlilik Politikası</a> | 
@@ -526,7 +518,6 @@
 
 </div>
 
-<!-- MODALLER (YASAL SAYFALAR) -->
 <div id="privacy-modal" class="modal">
     <div class="modal-content">
         <h3>🔒 Gizlilik Politikası</h3>
@@ -555,10 +546,9 @@
 <script type="module">
     import { supabase } from './supabase.js'
 
-    // ⚡ SERVICE WORKER KAYDI (PWA İÇİN)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
+            navigator.serviceWorker.register('/garaj-defteri/sw.js')
                 .then((reg) => console.log('Service Worker registered', reg))
                 .catch((err) => console.log('Service Worker registration failed', err));
         });
