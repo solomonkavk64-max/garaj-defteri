@@ -1,43 +1,1143 @@
-const CACHE_NAME = 'garajdefteri-v2';
-const ASSETS = [
-  '/garaj-defteri/',
-  '/garaj-defteri/index.html',
-  '/garaj-defteri/icon-yeni.png', // Eğer yeni ikon adı bu ise buraya yazmalısın
-  '/garaj-defteri/manifest.json'
-];
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GarajDefteri</title>
+    <!-- 🖼️ PWA VE LOGO ENTEGRASYONU -->
+    <link rel="icon" type="image/png" href="/garaj-defteri/icon-yeni.png">
+    <link rel="apple-touch-icon" href="/garaj-defteri/icon-yeni.png">
+    <link rel="manifest" href="/garaj-defteri/manifest.json">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --purple: #8b5cf6;
+            --border: #1e293b;
+            --input-bg: #090d16;
+        }
 
-// Kurulum aşamasında dosyaları önbelleğe al
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
-  console.log('[Service Worker] Installed & Cached v2');
-  self.skipWaiting();
-});
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            margin: 0;
+            padding: 12px;
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
 
-// Eski önbellekleri temizle
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
+        /* 🚗 ULTRA CANLI & HAREKETLİ BAŞLANGIÇ ANİMASYONU (SPLASH SCREEN) */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a233a 0%, var(--bg-color) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            overflow: hidden;
+        }
+
+        #splash-screen::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.3;
+            animation: bgGlow 3s infinite alternate ease-in-out;
+        }
+
+        .splash-icon-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            background: transparent;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 40px var(--primary-glow);
+            animation: enginePulse 2s infinite ease-in-out;
+            border-radius: 35px;
+            overflow: hidden;
+        }
+
+        .splash-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.15);
+            animation: carDrive 1.2s infinite alternate ease-in-out;
+        }
+
+        .splash-title {
+            margin-top: 25px;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-color);
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 15px var(--primary-glow);
+            z-index: 1;
+        }
+
+        .splash-subtitle {
+            margin-top: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            z-index: 1;
+            text-transform: uppercase;
+        }
+
+        .loader-track {
+            width: 180px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-top: 35px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .loader-thumb {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 40%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 6px;
+            box-shadow: 0 0 10px var(--primary);
+            animation: speedometer 1.2s infinite ease-in-out;
+        }
+
+        @keyframes bgGlow {
+            0% { transform: scale(1); opacity: 0.2; }
+            100% { transform: scale(1.4); opacity: 0.4; }
+        }
+
+        @keyframes enginePulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+            70% { box-shadow: 0 0 0 30px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        @keyframes carDrive {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        @keyframes speedometer {
+            0% { left: -40%; width: 30%; }
+            50% { width: 70%; }
+            100% { left: 100%; width: 30%; }
+        }
+
+        .container {
+            max-width: 480px;
+            margin: auto;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+        }
+
+        #auth-container {
+            text-align: center;
+            padding: 10px 5px;
+        }
+
+        .auth-hero-icon {
+            width: 110px;
+            height: 110px;
+            margin-bottom: 12px;
+            object-fit: cover;
+            border-radius: 24px;
+            display: inline-block;
+            box-shadow: 0 0 25px var(--primary-glow);
+            transform: scale(1.15);
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .app-header h2 { margin: 0; color: var(--text-color); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .app-header p { margin: 6px 0 0 0; font-size: 12px; color: var(--text-muted); }
+
+        .form-group {
+            margin-bottom: 16px;
+            background: var(--input-bg);
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .form-group h3 { margin-top: 0; margin-bottom: 12px; font-size: 15px; color: var(--accent); font-weight: 600; }
+
+        label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background: var(--success);
+            color: white;
+            border: none;
+            font-size: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: filter 0.2s, transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+        button:hover { filter: brightness(1.1); }
+
+        .btn-secondary { background: var(--primary); }
+        .btn-inspection { background: var(--purple); }
+        .btn-insurance { background: #d97706; }
+        .btn-km { background: #0d9488; }
+        .btn-danger { background: var(--danger); padding: 6px 12px; font-size: 12px; width: auto; margin-top: 8px; border-radius: 6px; }
+        .btn-logout { background: var(--danger); width: auto; padding: 6px 12px; font-size: 11px; position: absolute; right: 0; top: 0; }
+        .btn-calendar { background: var(--accent); padding: 6px 10px; font-size: 12px; width: auto; margin-top: 8px; text-decoration: none; display: inline-block; color: #0f172a; border-radius: 6px; font-weight: bold; }
+
+        .summary-box { 
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
+            color: var(--text-color); 
+            padding: 16px; 
+            border-radius: 14px; 
+            margin-bottom: 16px; 
+            text-align: center; 
+            border: 1px solid var(--border);
+        }
+
+        .alert-box { 
+            background: rgba(239, 68, 68, 0.15); 
+            border: 1px solid var(--danger);
+            color: #fca5a5; 
+            padding: 12px; 
+            border-radius: 10px; 
+            margin-bottom: 16px; 
+            font-size: 13px; 
+            display: none; 
+            line-height: 1.4;
+        }
+
+        .date-filter-row { display: flex; gap: 8px; margin-top: 8px; }
+        .date-filter-row input { margin-bottom: 0; font-size: 12px; padding: 8px; }
+
+        .vehicle-card, .log-card, .inspection-card, .insurance-card { 
+            background: var(--input-bg); 
+            padding: 14px; 
+            margin-top: 10px; 
+            border-radius: 12px; 
+            border-left: 4px solid var(--primary); 
+            font-size: 13px;
+            border: 1px solid var(--border);
+            line-height: 1.5;
+        }
+        .log-card { border-left-color: var(--accent); }
+        .inspection-card { border-left-color: var(--purple); }
+        .insurance-card { border-left-color: #d97706; }
+        
+        .receipt-link { color: var(--primary); text-decoration: none; font-weight: 500; display: inline-block; margin-top: 6px; }
+        .receipt-link:hover { text-decoration: underline; }
+        
+        .forgot-password { text-align: right; margin-top: -6px; margin-bottom: 16px; }
+        .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
+        .forgot-password a:hover { text-decoration: underline; }
+
+        .legal-footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .legal-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 6px;
+            cursor: pointer;
+        }
+        .legal-footer a:hover { text-decoration: underline; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: var(--text-color);
+            font-size: 13px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .modal-content h3 { margin-top: 0; color: var(--accent); }
+        .close-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #auth-container, #update-password-container, #app-content { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <div class="splash-icon-wrapper">
+            <img src="/garaj-defteri/icon-yeni.png" alt="GarajDefteri Logo" class="splash-logo-img">
+        </div>
+        <div class="splash-title">GarajDefteri</div>
+        <div class="splash-subtitle">Mobil Garaj Yönetim Sistemi</div>
+        <div class="loader-track">
+            <div class="loader-thumb"></div>
+        </div>
+    </div>
+
+<div class="container">
+    
+    <div id="auth-container">
+        <img src="/garaj-defteri/icon-yeni.png" alt="GarajDefteri Logo" class="auth-hero-icon">
+        <h2 style="color: var(--text-color); font-size: 24px; margin: 0 0 6px 0;">GarajDefteri</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 24px 0;">Aracınızın Tüm Geçmişi Parmaklarınızın Ucunda</p>
+        
+        <div class="form-group" style="text-align: left;">
+            <label>E-posta Adresi:</label>
+            <input type="email" id="auth_email" placeholder="ornek@mail.com">
+            
+            <label>Şifre:</label>
+            <input type="password" id="auth_password" placeholder="******">
+            
+            <div class="forgot-password">
+                <a onclick="handleForgotPassword()">Şifremi Unuttum?</a>
+            </div>
+            
+            <button onclick="handleLogin()" class="btn-secondary">Giriş Yap</button>
+            <button onclick="handleSignup()" style="background: var(--purple); margin-top: 10px;">Yeni Hesap Oluştur</button>
+        </div>
+    </div>
+
+    <div id="update-password-container">
+        <div class="app-header">
+            <h2>🔐 Yeni Şifre Belirle</h2>
+            <p>Hesabınız için yeni şifrenizi girin</p>
+        </div>
+        <div class="form-group">
+            <label>Yeni Şifre:</label>
+            <input type="password" id="new_password" placeholder="Yeni şifreniz">
+            <button onclick="handleUpdatePassword()" class="btn-secondary" style="margin-top: 10px;">Şifreyi Güncelle ve Giriş Yap</button>
+        </div>
+    </div>
+
+    <div id="app-content">
+        <div class="app-header">
+            <h2>🚗 GarajDefteri</h2>
+            <p>Mobil Garaj Yönetim Sistemi</p>
+            <button onclick="handleLogout()" class="btn-logout">Çıkış</button>
+        </div>
+        
+        <div id="alert-container" class="alert-box"></div>
+
+        <div class="summary-box">
+            <h3>💰 Maliyet Özeti</h3>
+            <p id="total-cost-display" style="font-size:14px; margin: 6px 0;">Toplam Masraf: Yükleniyor...</p>
+            <div class="date-filter-row">
+                <div style="flex:1;">
+                    <label style="font-size: 10px; text-align: left; color: var(--text-muted);">Başlangıç:</label>
+                    <input type="date" id="filter_start_date" onchange="calculateTotalCost()">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size: 10px; text-align: left; color: var(--text-muted);">Bitiş:</label>
+                    <input type="date" id="filter_end_date" onchange="calculateTotalCost()">
+                </div>
+            </div>
+            <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 10px; padding: 8px; font-size: 12px;">Tüm Zamanları Göster</button>
+        </div>
+
+        <div class="form-group">
+            <h3>➕ Yeni Araç Ekle</h3>
+            <input type="text" id="brand" placeholder="Marka (Örn: Chery)">
+            <input type="text" id="model" placeholder="Model (Örn: Omoda 5)">
+            <input type="number" id="year" placeholder="Yıl (Örn: 2023)">
+            <input type="number" id="current_km" placeholder="Güncel Kilometre (Örn: 35000)">
+            <input type="text" id="plate" placeholder="Plaka (Örn: 03AB123)">
+            <button onclick="addVehicle()">Aracı Kaydet</button>
+        </div>
+
+        <div class="form-group">
+            <h3>📊 KM Güncelle</h3>
+            <label for="km_vehicle_select">Araç Seçin:</label>
+            <select id="km_vehicle_select"><option value="">Araç yükleniyor...</option></select>
+            <input type="number" id="new_km" placeholder="Yeni Kilometre">
+            <button class="btn-km" onclick="updateVehicleKm()">Kilometreyi Güncelle</button>
+        </div>
+
+        <div class="form-group">
+            <h3>🔧 Bakım / Rutin Servis Ekle</h3>
+            <label for="vehicle_select">Araç Seçin:</label>
+            <select id="vehicle_select"><option value="">Araç yükleniyor...</option></select>
+            <input type="text" id="title" placeholder="İşlem Tanımı (Örn: Yağ Değişimi)">
+            <input type="number" id="cost" placeholder="Tutar (TL)">
+            <input type="number" id="log_km" placeholder="İşlem Anındaki KM">
+            <input type="date" id="log_date">
+            <hr style="border:0; border-top:1px dashed var(--border); margin:12px 0;">
+            <label style="font-size:11px; color:var(--danger);">Sonraki Bakım Hatırlatıcısı:</label>
+            <input type="number" id="next_km" placeholder="Sonraki Bakım KM">
+            <input type="date" id="next_date">
+            
+            <label for="receipt_file">Fiş / Fatura (Fotoğraf Çek veya Dosya Seç):</label>
+            <input type="file" id="receipt_file" accept="image/*,.pdf">
+            
+            <button class="btn-secondary" id="btn_add_log" onclick="addMaintenanceLog()">Bakım Kaydını Ekle</button>
+        </div>
+
+        <div class="form-group">
+            <h3>🛡️ Sigorta / Kasko Poliçesi Ekle</h3>
+            <label for="insurance_vehicle_select">Araç Seçin:</label>
+            <select id="insurance_vehicle_select"><option value="">Araç yükleniyor...</option></select>
+            <label>Poliçe Türü:</label>
+            <select id="insurance_type"><option value="Kasko">Kasko</option><option value="Trafik Sigortası">Trafik Sigortası</option></select>
+            <input type="text" id="company_name" placeholder="Sigorta Şirketi">
+            <label>Başlangıç Tarihi:</label><input type="date" id="ins_start_date">
+            <label>Bitiş Tarihi:</label><input type="date" id="ins_expiry_date">
+            <input type="number" id="ins_cost" placeholder="Poliçe Ücreti (TL)">
+            
+            <label for="policy_file">Poliçe Belgesi (Fotoğraf / Dosya):</label>
+            <input type="file" id="policy_file" accept="image/*,.pdf">
+            
+            <button class="btn-insurance" id="btn_add_ins" onclick="addInsuranceLog()">Poliçeyi Kaydet</button>
+        </div>
+
+        <div class="form-group">
+            <h3>🔍 TÜVTÜRK Muayene Kaydı Ekle</h3>
+            <label for="inspection_vehicle_select">Araç Seçin:</label>
+            <select id="inspection_vehicle_select"><option value="">Araç yükleniyor...</option></select>
+            <label>Muayene Tarihi:</label><input type="date" id="insp_date">
+            <label>Sonraki Geçerlilik Tarihi:</label><input type="date" id="insp_expiry">
+            <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL)">
+            
+            <label for="report_file">Muayene Raporu (Fotoğraf / Dosya):</label>
+            <input type="file" id="report_file" accept="image/*,.pdf">
+            
+            <button class="btn-inspection" id="btn_add_insp" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
+        </div>
+
+        <hr style="margin: 20px 0; border:0; border-top:1px solid rgba(255,255,255,0.05);">
+
+        <h3 style="font-size:14px; color:var(--text-muted); margin-bottom:6px;">Garajdaki Araçlarım</h3>
+        <div id="vehicle-list">Yükleniyor...</div>
+
+        <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">🛡️ Sigorta & Kasko Poliçeleri</h3>
+        <div id="insurance-list">Yükleniyor...</div>
+
+        <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">🔍 Muayene Geçmişi</h3>
+        <div id="inspection-list">Yükleniyor...</div>
+
+        <h3 style="font-size:14px; color:var(--text-muted); margin:20px 0 6px 0;">Son Bakım / Servis Kayıtları</h3>
+        <div id="log-list">Yükleniyor...</div>
+
+        <div class="legal-footer">
+            <p>© 2026 GarajDefteri</p>
+            <a onclick="openModal('privacy-modal')">Gizlilik Politikası</a> | 
+            <a onclick="openModal('terms-modal')">Kullanım Koşulları</a> | 
+            <a onclick="openModal('contact-modal')">Görüş & Öneri</a>
+        </div>
+    </div>
+
+</div>
+
+<div id="privacy-modal" class="modal">
+    <div class="modal-content">
+        <h3>🔒 Gizlilik Politikası</h3>
+        <p>GarajDefteri uygulaması, kullanıcıların araç bakım, sigorta ve masraf bilgilerini güvenli bir şekilde saklaması için tasarlanmıştır. E-posta adresiniz yalnızca hesap doğrulama ve şifre sıfırlama işlemleri için kullanılır, üçüncü şahıslarla asla paylaşılmaz.</p>
+        <button class="close-btn" onclick="closeModal('privacy-modal')">Kapat</button>
+    </div>
+</div>
+
+<div id="terms-modal" class="modal">
+    <div class="modal-content">
+        <h3>📜 Kullanım Koşulları</h3>
+        <p>Bu uygulamayı kullanarak girilen verilerin doğruluğundan kullanıcı sorumludur. Uygulama, hatırlatıcılar ve maliyet takibi konusunda yardımcı olmayı amaçlar; doğabilecek veri kayıplarından geliştirici sorumlu tutulamaz.</p>
+        <button class="close-btn" onclick="closeModal('terms-modal')">Kapat</button>
+    </div>
+</div>
+
+<div id="contact-modal" class="modal">
+    <div class="modal-content">
+        <h3>💬 Görüş, Öneri ve Şikayet</h3>
+        <p>Uygulamamızı geliştirmemiz için bize geri bildirimde bulunabilirsiniz:</p>
+        <p><strong>E-posta:</strong> destek@garajdefteri.com</p>
+        <button class="close-btn" onclick="closeModal('contact-modal')">Kapat</button>
+    </div>
+</div>
+
+<script type="module">
+    import { supabase } from './supabase.js'
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/garaj-defteri/sw.js')
+                .then((reg) => console.log('Service Worker registered', reg))
+                .catch((err) => console.log('Service Worker registration failed', err));
+        });
+    }
+
+    let globalVehicles = []
+    let globalMaintenance = []
+    let globalInspections = []
+    let globalInsurances = []
+
+    function compressImage(file) {
+        return new Promise((resolve) => {
+            if (!file || !file.type.startsWith('image/')) {
+                resolve(file);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    const MAX_WIDTH = 1000;
+                    const MAX_HEIGHT = 1000;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        const compressedFile = new File([blob], "upload_" + Date.now() + ".jpg", {
+                            type: 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+                        resolve(compressedFile);
+                    }, 'image/jpeg', 0.7);
+                };
+            };
+        });
+    }
+
+    window.openModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+    window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function hideSplashScreen() {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 600);
+        }
+    }
+
+    async function checkUserSession() {
+        const hash = window.location.hash;
+        const search = window.location.search;
+        
+        if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
+            (search && (search.includes('type=recovery') || search.includes('access_token')))) {
+            document.getElementById('auth-container').style.display = 'none'
+            document.getElementById('app-content').style.display = 'none'
+            document.getElementById('update-password-container').style.display = 'block'
+            hideSplashScreen();
+            return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+            document.getElementById('auth-container').style.display = 'none'
+            document.getElementById('update-password-container').style.display = 'none'
+            document.getElementById('app-content').style.display = 'block'
+            await loadAllData()
+        } else {
+            document.getElementById('auth-container').style.display = 'block'
+            document.getElementById('update-password-container').style.display = 'none'
+            document.getElementById('app-content').style.display = 'none'
+        }
+        hideSplashScreen();
+    }
+
+    window.handleLogin = async function() {
+        const email = document.getElementById('auth_email').value
+        const password = document.getElementById('auth_password').value
+        if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) alert('Giriş başarısız: ' + error.message); else checkUserSession();
+    }
+
+    window.handleSignup = async function() {
+        const email = document.getElementById('auth_email').value
+        const password = document.getElementById('auth_password').value
+        if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) alert('Kayıt başarısız: ' + error.message); else alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+    }
+
+    window.handleForgotPassword = async function() {
+        const email = document.getElementById('auth_email').value
+        if (!email) { alert('Lütfen şifresini unuttuğunuz e-posta adresinizi üstteki kutuya yazın!'); return; }
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
+        if (error) {
+            alert('İşlem başarısız: ' + error.message)
+        } else {
+            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! Gelen kutunuzu (veya spam klasörünü) kontrol edebilirsiniz.')
+        }
+    }
+
+    window.handleUpdatePassword = async function() {
+        const newPassword = document.getElementById('new_password').value
+        if (!newPassword) { alert('Lütfen yeni şifrenizi girin!'); return; }
+
+        const { error } = await supabase.auth.updateUser({ password: newPassword })
+        if (error) {
+            alert('Şifre güncellenemedi: ' + error.message)
+        } else {
+            alert('Şifreniz başarıyla değiştirildi! Giriş yapıldı.')
+            window.location.hash = ''
+            window.location.search = ''
+            window.location.href = window.location.pathname
+        }
+    }
+
+    window.handleLogout = async function() {
+        await supabase.auth.signOut()
+        checkUserSession()
+    }
+
+    async function loadAllData() {
+        await fetchVehicles()
+        await fetchInsurances()
+        await fetchLogs()
+        await fetchInspections()
+        document.getElementById('log_date').valueAsDate = new Date()
+        document.getElementById('insp_date').valueAsDate = new Date()
+        document.getElementById('ins_start_date').valueAsDate = new Date()
+    }
+
+    function checkReminders() {
+        const alertBox = document.getElementById('alert-container')
+        const today = new Date()
+        let warningText = ""
+        let hasWarning = false
+
+        globalInsurances.forEach(ins => {
+            if (ins.expiry_date) {
+                const expiryDate = new Date(ins.expiry_date)
+                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
+                const vehicleName = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
+                if (diffDays <= 15 && diffDays >= 0) {
+                    hasWarning = true
+                    warningText += `🛡️ <strong>${vehicleName}</strong> ${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>`
+                } else if (diffDays < 0) {
+                    hasWarning = true
+                    warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`
+                }
+            }
         })
-      );
-    })
-  );
-  self.clients.claim();
-});
 
-// İstekleri yakala ve önbellekten sun
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    })
-  );
-});
+        globalInspections.forEach(insp => {
+            if (insp.expiry_date) {
+                const expiryDate = new Date(insp.expiry_date)
+                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
+                const vehicleName = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
+                if (diffDays <= 30 && diffDays >= 0) {
+                    hasWarning = true
+                    warningText += `⚠️ <strong>${vehicleName}</strong> muayenesine <strong>${diffDays} gün</strong> kaldı!<br>`
+                } else if (diffDays < 0) {
+                    hasWarning = true
+                    warningText += `🚨 <strong>${vehicleName}</strong> muayene süresi <strong>GEÇMİŞ!</strong><br>`
+                }
+            }
+        })
+
+        globalMaintenance.forEach(log => {
+            const vehicle = globalVehicles.find(v => v.id === log.vehicle_id)
+            const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
+            if (log.next_date) {
+                const nextDate = new Date(log.next_date)
+                const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24))
+                if (diffDays <= 15 && diffDays >= 0) {
+                    hasWarning = true
+                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihine <strong>${diffDays} gün</strong> kaldı!<br>`
+                } else if (diffDays < 0) {
+                    hasWarning = true
+                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihi <strong>geldi/geçti!</strong><br>`
+                }
+            }
+            if (log.next_km && vehicle && vehicle.current_km) {
+                const kmDiff = log.next_km - vehicle.current_km
+                if (kmDiff <= 1000 && kmDiff >= 0) {
+                    hasWarning = true
+                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresine <strong>${kmDiff} KM</strong> kaldı!<br>`
+                } else if (kmDiff < 0) {
+                    hasWarning = true
+                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresini <strong>${Math.abs(kmDiff)} KM</strong> aştınız!<br>`
+                }
+            }
+        })
+
+        if (hasWarning) {
+            alertBox.innerHTML = warningText
+            alertBox.style.display = "block"
+        } else {
+            alertBox.style.display = "none"
+        }
+    }
+
+    function getGoogleCalendarUrl(title, dateStr, details) {
+        const dateFormatted = dateStr.replace(/-/g, '')
+        return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dateFormatted}/${dateFormatted}&details=${encodeURIComponent(details)}`
+    }
+
+    window.calculateTotalCost = function() {
+        const costDisplay = document.getElementById('total-cost-display')
+        const startDateVal = document.getElementById('filter_start_date').value
+        const endDateVal = document.getElementById('filter_end_date').value
+        const startDate = startDateVal ? new Date(startDateVal) : null
+        const endDate = endDateVal ? new Date(endDateVal) : null
+
+        if (startDate) startDate.setHours(0, 0, 0, 0)
+        if (endDate) endDate.setHours(23, 59, 59, 999)
+
+        let totalMaint = 0
+        globalMaintenance.forEach(item => {
+            const itemDate = item.date ? new Date(item.date) : null
+            let pass = true
+            if (startDate && itemDate && itemDate < startDate) pass = false
+            if (endDate && itemDate && itemDate > endDate) pass = false
+            if (pass) totalMaint += parseFloat(item.cost) || 0
+        })
+
+        let totalInsp = 0
+        globalInspections.forEach(item => {
+            const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
+            let pass = true
+            if (startDate && itemDate && itemDate < startDate) pass = false
+            if (endDate && itemDate && itemDate > endDate) pass = false
+            if (pass) totalInsp += parseFloat(item.cost) || 0
+        })
+
+        let totalIns = 0
+        globalInsurances.forEach(item => {
+            const itemDate = item.start_date ? new Date(item.start_date) : null
+            let pass = true
+            if (startDate && itemDate && itemDate < startDate) pass = false
+            if (endDate && itemDate && itemDate > endDate) pass = false
+            if (pass) totalIns += parseFloat(item.cost) || 0
+        })
+
+        const grandTotal = totalMaint + totalInsp + totalIns
+        let infoText = "Tüm Zamanlar"
+        if (startDateVal && endDateVal) infoText = `${startDateVal} - ${endDateVal}`
+
+        costDisplay.innerHTML = `Harcama (${infoText}): <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
+            <span style="font-size: 11px; color: var(--text-muted);">(Bakım: ${totalMaint.toLocaleString('tr-TR')} | Muayene: ${totalInsp.toLocaleString('tr-TR')} | Sigorta: ${totalIns.toLocaleString('tr-TR')})</span>`
+    }
+
+    window.resetDateFilter = function() {
+        document.getElementById('filter_start_date').value = ''
+        document.getElementById('filter_end_date').value = ''
+        calculateTotalCost()
+    }
+
+    async function fetchVehicles() {
+        const listDiv = document.getElementById('vehicle-list')
+        const selectBox = document.getElementById('vehicle_select')
+        const inspSelectBox = document.getElementById('inspection_vehicle_select')
+        const kmSelectBox = document.getElementById('km_vehicle_select')
+        const insSelectBox = document.getElementById('insurance_vehicle_select')
+        
+        const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
+        if (error) { listDiv.innerHTML = 'Hata: ' + error.message; return; }
+
+        globalVehicles = data || []
+        selectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+        inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+        kmSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+        insSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+
+        if (globalVehicles.length === 0) { listDiv.innerHTML = 'Henüz eklenmiş araç yok.'; return; }
+
+        listDiv.innerHTML = ''
+        globalVehicles.forEach(vehicle => {
+            listDiv.innerHTML += `
+                <div class="vehicle-card">
+                    <strong>${vehicle.brand} ${vehicle.model} (${vehicle.year || 'Yıl yok'})</strong><br>
+                    Plaka: ${vehicle.plate || 'Belirtilmemiş'} | KM: ${vehicle.current_km}<br>
+                    <button class="btn-danger" onclick="deleteVehicle('${vehicle.id}')">Aracı Sil</button>
+                </div>
+            `
+            const optHtml = `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.plate || 'Plakasız'})</option>`
+            selectBox.innerHTML += optHtml
+            inspSelectBox.innerHTML += optHtml
+            kmSelectBox.innerHTML += optHtml
+            insSelectBox.innerHTML += optHtml
+        })
+        checkReminders()
+    }
+
+    async function fetchInsurances() {
+        const insDiv = document.getElementById('insurance-list')
+        const { data, error } = await supabase.from('insurance_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
+        if (error) { insDiv.innerHTML = 'Sigortalar yüklenemedi: ' + error.message; return; }
+
+        globalInsurances = data || []
+        checkReminders()
+
+        if (globalInsurances.length === 0) { insDiv.innerHTML = 'Henüz sigorta/kasko kaydı yok.'; calculateTotalCost(); return; }
+
+        insDiv.innerHTML = ''
+        globalInsurances.forEach(ins => {
+            const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
+            const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : ''
+            const companyInfo = ins.company_name ? ` (${ins.company_name})` : ''
+            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : ''
+            const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`)
+
+            insDiv.innerHTML += `
+                <div class="insurance-card">
+                    <strong>${vehicleInfo} - ${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
+                    Başlangıç: ${ins.start_date} | <strong>Bitiş: ${ins.expiry_date}</strong>${reportHtml}<br>
+                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>
+                    <br><button class="btn-danger" onclick="deleteInsurance('${ins.id}')">Poliçeyi Sil</button>
+                </div>
+            `
+        })
+        calculateTotalCost()
+    }
+
+    async function fetchLogs() {
+        const logDiv = document.getElementById('log-list')
+        const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false })
+        if (error) { logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message; return; }
+
+        globalMaintenance = data || []
+        checkReminders()
+
+        if (globalMaintenance.length === 0) { logDiv.innerHTML = 'Henüz bakım kaydı yok.'; calculateTotalCost(); return; }
+
+        logDiv.innerHTML = ''
+        globalMaintenance.forEach(log => {
+            const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
+            const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : ''
+            const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : ''
+            
+            let calBtn = ''
+            if (log.next_date) {
+                const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} bakım zamanı!`)
+                calBtn = `<br><a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>`
+            }
+
+            logDiv.innerHTML += `
+                <div class="log-card">
+                    <strong>${vehicleInfo} - ${log.title}</strong><br>
+                    Tutar: ${log.cost} TL | İşlem KM: ${log.km || '-'}<br>
+                    Tarih: ${log.date || '-'}${nextInfo}${reportHtml}${calBtn}
+                    <br><button class="btn-danger" onclick="deleteLog('${log.id}')">Bakım Kaydını Sil</button>
+                </div>
+            `
+        })
+        calculateTotalCost()
+    }
+
+    async function fetchInspections() {
+        const inspDiv = document.getElementById('inspection-list')
+        const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
+        if (error) { inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message; return; }
+
+        globalInspections = data || []
+        checkReminders()
+
+        if (globalInspections.length === 0) { inspDiv.innerHTML = 'Henüz muayene kaydı yok.'; calculateTotalCost(); return; }
+
+        inspDiv.innerHTML = ''
+        globalInspections.forEach(insp => {
+            const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
+            const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
+            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" class="receipt-link">📄 Muayene Raporu</a>` : ''
+            const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi bitiyor!`)
+
+            inspDiv.innerHTML += `
+                <div class="inspection-card">
+                    <strong>${vehicleInfo} - Muayene</strong>${costInfo}<br>
+                    Tarih: ${insp.inspection_date} | <strong>Son Geçerlilik: ${insp.expiry_date}</strong>${reportHtml}<br>
+                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>
+                    <br><button class="btn-danger" onclick="deleteInspection('${insp.id}')">Muayene Kaydını Sil</button>
+                </div>
+            `
+        })
+        calculateTotalCost()
+    }
+
+    window.addVehicle = async function() {
+        const brand = document.getElementById('brand').value
+        const model = document.getElementById('model').value
+        const year = document.getElementById('year').value
+        const current_km = document.getElementById('current_km').value
+        const plate = document.getElementById('plate').value
+        if (!brand || !model || !current_km) { alert('Lütfen marka, model ve kilometre alanlarını doldurun!'); return; }
+        const { error } = await supabase.from('vehicles').insert([{ brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }])
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Araç eklendi!'); document.getElementById('brand').value = ''; document.getElementById('model').value = ''; document.getElementById('year').value = ''; document.getElementById('current_km').value = ''; document.getElementById('plate').value = ''; fetchVehicles(); }
+    }
+
+    window.updateVehicleKm = async function() {
+        const vehicle_id = document.getElementById('km_vehicle_select').value
+        const new_km = document.getElementById('new_km').value
+        if (!vehicle_id || !new_km) { alert('Lütfen araç seçin ve yeni KM girin!'); return; }
+        const { error } = await supabase.from('vehicles').update({ current_km: parseInt(new_km) }).eq('id', vehicle_id)
+        if (error) alert('Güncellenemedi: ' + error.message); else { alert('KM güncellendi!'); document.getElementById('new_km').value = ''; fetchVehicles(); fetchLogs(); }
+    }
+
+    window.addInsuranceLog = async function() {
+        const vehicle_id = document.getElementById('insurance_vehicle_select').value
+        const insurance_type = document.getElementById('insurance_type').value
+        const company_name = document.getElementById('company_name').value
+        const start_date = document.getElementById('ins_start_date').value
+        const expiry_date = document.getElementById('ins_expiry_date').value
+        const cost = document.getElementById('ins_cost').value
+        const fileInput = document.getElementById('policy_file')
+        const btn = document.getElementById('btn_add_ins')
+
+        if (!vehicle_id || !start_date || !expiry_date) { alert('Lütfen araç ve tarih alanlarını doldurun!'); return; }
+
+        btn.disabled = true;
+        btn.innerText = "Kaydediliyor...";
+
+        let policy_url = null
+        if (fileInput.files.length > 0) {
+            let file = fileInput.files[0]
+            file = await compressImage(file)
+            const fileName = `ins_${Date.now()}_${file.name}`
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            if (uploadError) { 
+                alert('Dosya yükleme hatası: ' + uploadError.message); 
+                btn.disabled = false; btn.innerText = "Poliçeyi Kaydet";
+                return; 
+            }
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
+            policy_url = publicUrlData.publicUrl
+        }
+
+        const { error } = await supabase.from('insurance_logs').insert([{ vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url }])
+        
+        btn.disabled = false;
+        btn.innerText = "Poliçeyi Kaydet";
+
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Poliçe eklendi!'); document.getElementById('company_name').value = ''; document.getElementById('ins_cost').value = ''; document.getElementById('policy_file').value = ''; fetchInsurances(); }
+    }
+
+    window.addMaintenanceLog = async function() {
+        const vehicle_id = document.getElementById('vehicle_select').value
+        const title = document.getElementById('title').value
+        const cost = document.getElementById('cost').value
+        const km = document.getElementById('log_km').value
+        const date = document.getElementById('log_date').value
+        const next_km = document.getElementById('next_km').value
+        const next_date = document.getElementById('next_date').value
+        const fileInput = document.getElementById('receipt_file')
+        const btn = document.getElementById('btn_add_log')
+
+        if (!vehicle_id || !title || !cost) { alert('Lütfen zorunlu alanları doldurun!'); return; }
+
+        btn.disabled = true;
+        btn.innerText = "Kaydediliyor...";
+
+        let receipt_url = null
+        if (fileInput.files.length > 0) {
+            let file = fileInput.files[0]
+            file = await compressImage(file)
+            const fileName = `maint_${Date.now()}_${file.name}`
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            if (uploadError) { 
+                alert('Dosya yükleme hatası: ' + uploadError.message); 
+                btn.disabled = false; btn.innerText = "Bakım Kaydını Ekle";
+                return; 
+            }
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
+            receipt_url = publicUrlData.publicUrl
+        }
+
+        const { error } = await supabase.from('maintenance_logs').insert([{ vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, next_km: next_km ? parseInt(next_km) : null, next_date: next_date || null, receipt_url }])
+        
+        btn.disabled = false;
+        btn.innerText = "Bakım Kaydını Ekle";
+
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Bakım eklendi!'); document.getElementById('title').value = ''; document.getElementById('cost').value = ''; document.getElementById('log_km').value = ''; document.getElementById('next_km').value = ''; document.getElementById('next_date').value = ''; document.getElementById('receipt_file').value = ''; fetchLogs(); }
+    }
+
+    window.addInspectionLog = async function() {
+        const vehicle_id = document.getElementById('inspection_vehicle_select').value
+        const inspection_date = document.getElementById('insp_date').value
+        const expiry_date = document.getElementById('insp_expiry').value
+        const cost = document.getElementById('insp_cost').value
+        const fileInput = document.getElementById('report_file')
+        const btn = document.getElementById('btn_add_insp')
+
+        if (!vehicle_id || !inspection_date || !expiry_date) { alert('Lütfen tarih alanlarını doldurun!'); return; }
+
+        btn.disabled = true;
+        btn.innerText = "Kaydediliyor...";
+
+        let report_url = null
+        if (fileInput.files.length > 0) {
+            let file = fileInput.files[0]
+            file = await compressImage(file)
+            const fileName = `insp_${Date.now()}_${file.name}`
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            if (uploadError) { 
+                alert('Dosya yükleme hatası: ' + uploadError.message); 
+                btn.disabled = false; btn.innerText = "Muayene Kaydını Ekle";
+                return; 
+            }
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
+            report_url = publicUrlData.publicUrl
+        }
+
+        const { error } = await supabase.from('inspection_logs').insert([{ vehicle_id, inspection_date, expiry_date, cost: cost ? parseFloat(cost) : null, report_url }])
+        
+        btn.disabled = false;
+        btn.innerText = "Muayene Kaydını Ekle";
+
+        if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Muayene eklendi!'); document.getElementById('insp_date').value = ''; document.getElementById('insp_expiry').value = ''; document.getElementById('insp_cost').value = ''; document.getElementById('report_file').value = ''; fetchInspections(); }
+    }
+
+    window.deleteVehicle = async function(id) {
+        if (confirm('Aracı ve bu araca ait tüm bakım, sigorta ve muayene kayıtlarını silmek istediğinize emin misiniz?')) {
+            await supabase.from('maintenance_logs').delete().eq('vehicle_id', id);
+            await supabase.from('insurance_logs').delete().eq('vehicle_id', id);
+            await supabase.from('inspection_logs').delete().eq('vehicle_id', id);
+
+            const { error } = await supabase.from('vehicles').delete().eq('id', id)
+            if (error) {
+                alert('Silme hatası: ' + error.message);
+            } else { 
+                alert('Araç başarıyla silindi.');
+                fetchVehicles(); 
+                fetchInsurances(); 
+                fetchLogs(); 
+                fetchInspections(); 
+            }
+        }
+    }
+
+    window.deleteInsurance = async function(id) {
+        if (confirm('Silmek istediğinize emin misiniz?')) {
+            const { error } = await supabase.from('insurance_logs').delete().eq('id', id)
+            if (error) alert('Silme hatası: ' + error.message); else fetchInsurances();
+        }
+    }
+
+    window.deleteLog = async function(id) {
+        if (confirm('Silmek istediğinize emin misiniz?')) {
+            const { error } = await supabase.from('maintenance_logs').delete().eq('id', id)
+            if (error) alert('Silme hatası: ' + error.message); else fetchLogs();
+        }
+    }
+
+    window.deleteInspection = async function(id) {
+        if (confirm('Silmek istediğinize emin misiniz?')) {
+            const { error } = await supabase.from('inspection_logs').delete().eq('id', id)
+            if (error) alert('Silme hatası: ' + error.message); else fetchInspections();
+        }
+    }
+
+    checkUserSession()
+</script>
+
+</body>
+</html>
