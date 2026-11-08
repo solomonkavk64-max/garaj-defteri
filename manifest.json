@@ -3,7 +3,7 @@
   "name": "GarajDefteri",
   "short_name": "GarajDefteri",
   "description": "Aracınızın bakım, sigorta ve masraf geçmişini güvenle takip edebileceğiniz mobil garaj yönetim sistemi.",
-  "start_url": "/",
+  "start_url": "/garaj-defteri/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0b0f19",
