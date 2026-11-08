@@ -6,16 +6,18 @@
     <title>GarajDefteri</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
             --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
             --accent: #f59e0b;
             --danger: #ef4444;
             --success: #10b981;
             --purple: #8b5cf6;
-            --border: #334155;
+            --border: #1e293b;
+            --input-bg: #090d16;
         }
 
         body {
@@ -25,66 +27,89 @@
             padding: 12px;
             color: var(--text-color);
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        /* 🚗 BAŞLANGIÇ ANİMASYONU (SPLASH SCREEN) */
+        /* 🚗 ULTRA CANLI & HAREKETLİ BAŞLANGIÇ ANİMASYONU (SPLASH SCREEN) */
         #splash-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            background: radial-gradient(circle at center, #1a233a 0%, var(--bg-color) 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             transition: opacity 0.6s ease, visibility 0.6s ease;
+            overflow: hidden;
+        }
+
+        /* Arka plan hareketli neon ışık hüzmeleri */
+        #splash-screen::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: var(--primary);
+            filter: blur(90px);
+            opacity: 0.3;
+            animation: bgGlow 3s infinite alternate ease-in-out;
         }
 
         .splash-icon-wrapper {
             position: relative;
-            width: 90px;
-            height: 90px;
-            background: rgba(59, 130, 246, 0.1);
+            width: 100px;
+            height: 100px;
+            background: rgba(59, 130, 246, 0.15);
+            border: 2px solid rgba(59, 130, 246, 0.3);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
+            box-shadow: 0 0 30px var(--primary-glow);
             animation: enginePulse 2s infinite ease-in-out;
         }
 
         .splash-logo {
-            font-size: 45px;
-            animation: carDrive 1.5s infinite alternate ease-in-out;
+            font-size: 48px;
+            animation: carDrive 1.2s infinite alternate ease-in-out;
         }
 
         .splash-title {
-            margin-top: 20px;
-            font-size: 26px;
+            margin-top: 25px;
+            font-size: 28px;
             font-weight: 800;
             color: var(--text-color);
-            letter-spacing: 1px;
-            text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 15px var(--primary-glow);
+            z-index: 1;
         }
 
         .splash-subtitle {
             margin-top: 6px;
             font-size: 13px;
             color: var(--text-muted);
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            z-index: 1;
+            text-transform: uppercase;
         }
 
         .loader-track {
-            width: 160px;
+            width: 180px;
             height: 6px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 6px;
-            margin-top: 30px;
+            margin-top: 35px;
             overflow: hidden;
-            border: 1px solid var(--border);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
+            z-index: 1;
         }
 
         .loader-thumb {
@@ -95,97 +120,131 @@
             width: 40%;
             background: linear-gradient(90deg, var(--primary), var(--accent));
             border-radius: 6px;
+            box-shadow: 0 0 10px var(--primary);
             animation: speedometer 1.2s infinite ease-in-out;
         }
 
+        @keyframes bgGlow {
+            0% { transform: scale(1); opacity: 0.2; }
+            100% { transform: scale(1.4); opacity: 0.4; }
+        }
+
         @keyframes enginePulse {
-            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            70% { box-shadow: 0 0 0 25px rgba(59, 130, 246, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+            70% { box-shadow: 0 0 0 30px rgba(59, 130, 246, 0); }
             100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
 
         @keyframes carDrive {
-            0% { transform: scale(0.95) rotate(-2deg); }
-            100% { transform: scale(1.05) rotate(2deg); }
+            0% { transform: translateY(0) scale(0.95) rotate(-3deg); }
+            100% { transform: translateY(-5px) scale(1.05) rotate(3deg); }
         }
 
         @keyframes speedometer {
             0% { left: -40%; width: 30%; }
-            50% { width: 60%; }
+            50% { width: 70%; }
             100% { left: 100%; width: 30%; }
         }
 
+        /* 🎨 ANA UYGULAMA CONTAINER VE KARTLAR */
         .container {
             max-width: 480px;
             margin: auto;
+            width: 100%;
             background: var(--card-bg);
-            padding: 16px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+        }
+
+        /* 🌟 GİRİŞ EKRANI ÖZEL CANLI DÜZENİ */
+        #auth-container {
+            text-align: center;
+            padding: 10px 5px;
+        }
+
+        .auth-hero-icon {
+            font-size: 60px;
+            margin-bottom: 10px;
+            display: inline-block;
+            animation: carDrive 2s infinite alternate ease-in-out;
         }
 
         .app-header {
             text-align: center;
             margin-bottom: 20px;
             position: relative;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .app-header h2 { margin: 0; color: var(--text-color); font-size: 22px; }
-        .app-header p { margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted); }
+        .app-header h2 { margin: 0; color: var(--text-color); font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .app-header p { margin: 6px 0 0 0; font-size: 12px; color: var(--text-muted); }
 
         .form-group {
             margin-bottom: 16px;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
+            background: var(--input-bg);
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
         }
 
-        .form-group h3 { margin-top: 0; margin-bottom: 12px; font-size: 15px; color: var(--accent); }
+        .form-group h3 { margin-top: 0; margin-bottom: 12px; font-size: 15px; color: var(--accent); font-weight: 600; }
 
-        label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+        label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
 
         input, select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 12px;
             box-sizing: border-box;
-            background: #0f172a;
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 10px;
             color: var(--text-color);
             font-size: 14px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
         button {
             width: 100%;
-            padding: 11px;
+            padding: 12px;
             box-sizing: border-box;
             background: var(--success);
             color: white;
             border: none;
             font-size: 14px;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: 700;
+            transition: filter 0.2s, transform 0.1s;
         }
+
+        button:active { transform: scale(0.98); }
+        button:hover { filter: brightness(1.1); }
 
         .btn-secondary { background: var(--primary); }
         .btn-inspection { background: var(--purple); }
         .btn-insurance { background: #d97706; }
         .btn-km { background: #0d9488; }
         .btn-danger { background: var(--danger); padding: 6px 12px; font-size: 12px; width: auto; margin-top: 8px; border-radius: 6px; }
-        .btn-logout { background: var(--danger); width: auto; padding: 5px 10px; font-size: 11px; position: absolute; right: 0; top: 0; }
+        .btn-logout { background: var(--danger); width: auto; padding: 6px 12px; font-size: 11px; position: absolute; right: 0; top: 0; }
         .btn-calendar { background: var(--accent); padding: 6px 10px; font-size: 12px; width: auto; margin-top: 8px; text-decoration: none; display: inline-block; color: #0f172a; border-radius: 6px; font-weight: bold; }
 
         .summary-box { 
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); 
             color: var(--text-color); 
-            padding: 14px; 
-            border-radius: 12px; 
+            padding: 16px; 
+            border-radius: 14px; 
             margin-bottom: 16px; 
             text-align: center; 
             border: 1px solid var(--border);
@@ -195,39 +254,42 @@
             background: rgba(239, 68, 68, 0.15); 
             border: 1px solid var(--danger);
             color: #fca5a5; 
-            padding: 10px; 
+            padding: 12px; 
             border-radius: 10px; 
             margin-bottom: 16px; 
             font-size: 13px; 
             display: none; 
+            line-height: 1.4;
         }
 
         .date-filter-row { display: flex; gap: 8px; margin-top: 8px; }
-        .date-filter-row input { margin-bottom: 0; font-size: 12px; padding: 6px; }
+        .date-filter-row input { margin-bottom: 0; font-size: 12px; padding: 8px; }
 
         .vehicle-card, .log-card, .inspection-card, .insurance-card { 
-            background: #0f172a; 
-            padding: 12px; 
+            background: var(--input-bg); 
+            padding: 14px; 
             margin-top: 10px; 
-            border-radius: 10px; 
+            border-radius: 12px; 
             border-left: 4px solid var(--primary); 
             font-size: 13px;
             border: 1px solid var(--border);
+            line-height: 1.5;
         }
         .log-card { border-left-color: var(--accent); }
         .inspection-card { border-left-color: var(--purple); }
         .insurance-card { border-left-color: #d97706; }
-        .receipt-link { color: var(--primary); text-decoration: none; font-weight: 500; display: inline-block; margin-top: 4px; }
+        
+        .receipt-link { color: var(--primary); text-decoration: none; font-weight: 500; display: inline-block; margin-top: 6px; }
         .receipt-link:hover { text-decoration: underline; }
         
-        .forgot-password { text-align: right; margin-top: -4px; margin-bottom: 12px; }
+        .forgot-password { text-align: right; margin-top: -6px; margin-bottom: 16px; }
         .forgot-password a { color: var(--primary); font-size: 12px; text-decoration: none; cursor: pointer; }
         .forgot-password a:hover { text-decoration: underline; }
 
         .legal-footer {
             margin-top: 30px;
             padding-top: 15px;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
             text-align: center;
             font-size: 11px;
             color: var(--text-muted);
@@ -244,7 +306,8 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
             z-index: 10000;
             justify-content: center;
             align-items: center;
@@ -254,25 +317,26 @@
         .modal-content {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 20px;
-            border-radius: 12px;
+            padding: 24px;
+            border-radius: 16px;
             max-width: 400px;
             width: 100%;
             max-height: 80vh;
             overflow-y: auto;
             color: var(--text-color);
             font-size: 13px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
         .modal-content h3 { margin-top: 0; color: var(--accent); }
         .close-btn {
             background: var(--danger);
             color: white;
             border: none;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 10px;
+            border-radius: 8px;
             cursor: pointer;
             width: 100%;
-            margin-top: 15px;
+            margin-top: 20px;
             font-weight: bold;
         }
 
@@ -281,7 +345,7 @@
 </head>
 <body>
 
-    <!-- YARATICI BAŞLANGIÇ ANİMASYONU EKRANI -->
+    <!-- ULTRA CANLI BAŞLANGIÇ ANİMASYONU EKRANI -->
     <div id="splash-screen">
         <div class="splash-icon-wrapper">
             <div class="splash-logo">🚗</div>
@@ -295,13 +359,13 @@
 
 <div class="container">
     
-    <!-- 1. GİRİŞ / KAYIT EKRANI -->
+    <!-- 1. GİRİŞ / KAYIT EKRANI (DAHA CANLI VE ŞIK) -->
     <div id="auth-container">
-        <div class="app-header" style="border:none; padding-bottom:0;">
-            <h2>🚗 GarajDefteri</h2>
-            <p>Aracınızın Dijital Geçmişi</p>
-        </div>
-        <div class="form-group" style="margin-top:20px;">
+        <div class="auth-hero-icon">🚘</div>
+        <h2 style="color: var(--text-color); font-size: 24px; margin: 0 0 6px 0;">GarajDefteri</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 24px 0;">Aracınızın Tüm Geçmişi Parmaklarınızın Ucunda</p>
+        
+        <div class="form-group" style="text-align: left;">
             <label>E-posta Adresi:</label>
             <input type="email" id="auth_email" placeholder="ornek@mail.com">
             
@@ -313,7 +377,7 @@
             </div>
             
             <button onclick="handleLogin()" class="btn-secondary">Giriş Yap</button>
-            <button onclick="handleSignup()" style="background: var(--purple); margin-top: 8px;">Kayıt Ol</button>
+            <button onclick="handleSignup()" style="background: var(--purple); margin-top: 10px;">Yeni Hesap Oluştur</button>
         </div>
     </div>
 
@@ -353,15 +417,15 @@
                     <input type="date" id="filter_end_date" onchange="calculateTotalCost()">
                 </div>
             </div>
-            <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 8px; padding: 6px; font-size: 12px;">Tüm Zamanları Göster</button>
+            <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 10px; padding: 8px; font-size: 12px;">Tüm Zamanları Göster</button>
         </div>
 
         <div class="form-group">
             <h3>➕ Yeni Araç Ekle</h3>
-            <input type="text" id="brand" placeholder="Marka (Örn: Lada)">
-            <input type="text" id="model" placeholder="Model (Örn: Samara)">
-            <input type="number" id="year" placeholder="Yıl (Örn: 1990)">
-            <input type="number" id="current_km" placeholder="Güncel Kilometre (Örn: 145000)">
+            <input type="text" id="brand" placeholder="Marka (Örn: Chery)">
+            <input type="text" id="model" placeholder="Model (Örn: Omoda 5)">
+            <input type="number" id="year" placeholder="Yıl (Örn: 2023)">
+            <input type="number" id="current_km" placeholder="Güncel Kilometre (Örn: 35000)">
             <input type="text" id="plate" placeholder="Plaka (Örn: 03AB123)">
             <button onclick="addVehicle()">Aracı Kaydet</button>
         </div>
@@ -370,7 +434,7 @@
             <h3>📊 KM Güncelle</h3>
             <label for="km_vehicle_select">Araç Seçin:</label>
             <select id="km_vehicle_select"><option value="">Araç yükleniyor...</option></select>
-            <input type="number" id="new_km" placeholder="Yeni Kilometre (Örn: 146200)">
+            <input type="number" id="new_km" placeholder="Yeni Kilometre">
             <button class="btn-km" onclick="updateVehicleKm()">Kilometreyi Güncelle</button>
         </div>
 
@@ -382,7 +446,7 @@
             <input type="number" id="cost" placeholder="Tutar (TL)">
             <input type="number" id="log_km" placeholder="İşlem Anındaki KM">
             <input type="date" id="log_date">
-            <hr style="border:0; border-top:1px dashed var(--border); margin:10px 0;">
+            <hr style="border:0; border-top:1px dashed var(--border); margin:12px 0;">
             <label style="font-size:11px; color:var(--danger);">Sonraki Bakım Hatırlatıcısı:</label>
             <input type="number" id="next_km" placeholder="Sonraki Bakım KM">
             <input type="date" id="next_date">
@@ -424,7 +488,7 @@
             <button class="btn-inspection" id="btn_add_insp" onclick="addInspectionLog()">Muayene Kaydını Ekle</button>
         </div>
 
-        <hr style="margin: 20px 0; border:0; border-top:1px solid var(--border);">
+        <hr style="margin: 20px 0; border:0; border-top:1px solid rgba(255,255,255,0.05);">
 
         <h3 style="font-size:14px; color:var(--text-muted); margin-bottom:6px;">Garajdaki Araçlarım</h3>
         <div id="vehicle-list">Yükleniyor...</div>
@@ -483,7 +547,6 @@
     let globalInspections = []
     let globalInsurances = []
 
-    // ⚡ OPTİMİZE EDİLMİŞ VE HIZLANDIRILMIŞ GÖRSEL SIKIŞTIRMA
     function compressImage(file) {
         return new Promise((resolve) => {
             if (!file || !file.type.startsWith('image/')) {
@@ -839,10 +902,7 @@
         logDiv.innerHTML = ''
         globalMaintenance.forEach(log => {
             const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
-            
-            // 📌 YENİ: Fotoğraf artık direkt ekranda basılmıyor, tıklanabilir mavi bağlantı linki şeklinde gösteriliyor.
             const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : ''
-            
             const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : ''
             
             let calBtn = ''
