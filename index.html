@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GarajDefteri</title>
     <!-- 🖼️ PWA VE LOGO ENTEGRASYONU -->
-    <link rel="icon" type="image/png" href="/garaj-defteri/icon-yeni.png">
-    <link rel="apple-touch-icon" href="/garaj-defteri/icon-yeni.png">
-    <link rel="manifest" href="/garaj-defteri/manifest.json">
+    <link rel="icon" type="image/png" href="./icon-yeni.png">
+    <link rel="apple-touch-icon" href="./icon-yeni.png">
+    <link rel="manifest" href="./manifest.json">
     
     <style>
         :root {
@@ -357,7 +357,7 @@
 
     <div id="splash-screen">
         <div class="splash-icon-wrapper">
-            <img src="/garaj-defteri/icon-yeni.png" alt="GarajDefteri Logo" class="splash-logo-img">
+            <img src="./icon-yeni.png" alt="GarajDefteri Logo" class="splash-logo-img">
         </div>
         <div class="splash-title">GarajDefteri</div>
         <div class="splash-subtitle">Mobil Garaj Yönetim Sistemi</div>
@@ -369,7 +369,7 @@
 <div class="container">
     
     <div id="auth-container">
-        <img src="/garaj-defteri/icon-yeni.png" alt="GarajDefteri Logo" class="auth-hero-icon">
+        <img src="./icon-yeni.png" alt="GarajDefteri Logo" class="auth-hero-icon">
         <h2 style="color: var(--text-color); font-size: 24px; margin: 0 0 6px 0;">GarajDefteri</h2>
         <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 24px 0;">Aracınızın Tüm Geçmişi Parmaklarınızın Ucunda</p>
         
@@ -548,7 +548,7 @@
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/garaj-defteri/sw.js')
+            navigator.serviceWorker.register('./sw.js')
                 .then((reg) => console.log('Service Worker registered', reg))
                 .catch((err) => console.log('Service Worker registration failed', err));
         });
