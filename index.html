@@ -69,25 +69,24 @@
 
         .splash-icon-wrapper {
             position: relative;
-            width: 100px;
-            height: 100px;
-            background: rgba(59, 130, 246, 0.15);
-            border: 2px solid rgba(59, 130, 246, 0.3);
-            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.4);
+            border-radius: 28px; /* Tam yuvarlak yerine şık bir uygulama simgesi köşesi */
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 30px var(--primary-glow);
+            box-shadow: 0 0 35px var(--primary-glow);
             animation: enginePulse 2s infinite ease-in-out;
             overflow: hidden;
         }
 
         .splash-logo-img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             animation: carDrive 1.2s infinite alternate ease-in-out;
-            border-radius: 12px;
         }
 
         .splash-title {
@@ -145,8 +144,8 @@
         }
 
         @keyframes carDrive {
-            0% { transform: translateY(0) scale(0.95) rotate(-3deg); }
-            100% { transform: translateY(-5px) scale(1.05) rotate(3deg); }
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
         }
 
         @keyframes speedometer {
@@ -175,14 +174,14 @@
         }
 
         .auth-hero-icon {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             margin-bottom: 12px;
-            object-fit: contain;
-            border-radius: 16px;
+            object-fit: cover;
+            border-radius: 20px;
             display: inline-block;
-            animation: carDrive 2s infinite alternate ease-in-out;
-            box-shadow: 0 0 20px var(--primary-glow);
+            box-shadow: 0 0 25px var(--primary-glow);
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
         .app-header {
