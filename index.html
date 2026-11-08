@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GarajDefteri</title>
+    <!-- 🖼️ PWA VE LOGO ENTEGRASYONU -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -74,11 +79,15 @@
             align-items: center;
             box-shadow: 0 0 30px var(--primary-glow);
             animation: enginePulse 2s infinite ease-in-out;
+            overflow: hidden;
         }
 
-        .splash-logo {
-            font-size: 48px;
+        .splash-logo-img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
             animation: carDrive 1.2s infinite alternate ease-in-out;
+            border-radius: 12px;
         }
 
         .splash-title {
@@ -166,10 +175,14 @@
         }
 
         .auth-hero-icon {
-            font-size: 60px;
-            margin-bottom: 10px;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 12px;
+            object-fit: contain;
+            border-radius: 16px;
             display: inline-block;
             animation: carDrive 2s infinite alternate ease-in-out;
+            box-shadow: 0 0 20px var(--primary-glow);
         }
 
         .app-header {
@@ -345,10 +358,10 @@
 </head>
 <body>
 
-    <!-- ULTRA CANLI BAŞLANGIÇ ANİMASYONU EKRANI -->
+    <!-- ULTRA CANLI BAŞLANGIÇ ANİMASYONU EKRANI (LOGOLU) -->
     <div id="splash-screen">
         <div class="splash-icon-wrapper">
-            <div class="splash-logo">🚗</div>
+            <img src="icon.png" alt="GarajDefteri Logo" class="splash-logo-img">
         </div>
         <div class="splash-title">GarajDefteri</div>
         <div class="splash-subtitle">Mobil Garaj Yönetim Sistemi</div>
@@ -359,9 +372,9 @@
 
 <div class="container">
     
-    <!-- 1. GİRİŞ / KAYIT EKRANI (DAHA CANLI VE ŞIK) -->
+    <!-- 1. GİRİŞ / KAYIT EKRANI (LOGOLU) -->
     <div id="auth-container">
-        <div class="auth-hero-icon">🚘</div>
+        <img src="icon.png" alt="GarajDefteri Logo" class="auth-hero-icon">
         <h2 style="color: var(--text-color); font-size: 24px; margin: 0 0 6px 0;">GarajDefteri</h2>
         <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 24px 0;">Aracınızın Tüm Geçmişi Parmaklarınızın Ucunda</p>
         
@@ -541,6 +554,15 @@
 
 <script type="module">
     import { supabase } from './supabase.js'
+
+    // ⚡ SERVICE WORKER KAYDI (PWA İÇİN)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then((reg) => console.log('Service Worker registered', reg))
+                .catch((err) => console.log('Service Worker registration failed', err));
+        });
+    }
 
     let globalVehicles = []
     let globalMaintenance = []
