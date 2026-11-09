@@ -426,6 +426,21 @@
             <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 10px; padding: 8px; font-size: 12px;">Tüm Zamanları Göster</button>
         </div>
 
+        <!-- 📑 DİJİTAL GARAJ RAPORU (PDF) MODÜLÜ -->
+        <div class="form-group" style="border: 1px solid var(--primary);">
+            <h3 style="color: var(--primary);">📑 Dijital Garaj Raporu Oluştur (PDF)</h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+                Aracınızın tüm bakım, muayene ve sigorta geçmişini içeren resmi görünümlü PDF raporu indirin.
+            </p>
+            <label for="report_vehicle_select">Raporu Alınacak Araç:</label>
+            <select id="report_vehicle_select">
+                <option value="">Araç yükleniyor...</option>
+            </select>
+            <button onclick="generateVehicleReport()" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); margin-top: 5px;">
+                📄 PDF Raporu Oluştur & İndir
+            </button>
+        </div>
+
         <div class="form-group">
             <h3>➕ Yeni Araç Ekle</h3>
             <input type="text" id="brand" placeholder="Marka (Örn: Chery)">
@@ -841,6 +856,7 @@
         const inspSelectBox = document.getElementById('inspection_vehicle_select')
         const kmSelectBox = document.getElementById('km_vehicle_select')
         const insSelectBox = document.getElementById('insurance_vehicle_select')
+        const reportSelectBox = document.getElementById('report_vehicle_select')
         
         const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
         if (error) { listDiv.innerHTML = 'Hata: ' + error.message; return; }
@@ -850,6 +866,7 @@
         inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
         kmSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
         insSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+        if (reportSelectBox) reportSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
 
         if (globalVehicles.length === 0) { listDiv.innerHTML = 'Henüz eklenmiş araç yok.'; return; }
 
@@ -867,6 +884,7 @@
             inspSelectBox.innerHTML += optHtml
             kmSelectBox.innerHTML += optHtml
             insSelectBox.innerHTML += optHtml
+            if (reportSelectBox) reportSelectBox.innerHTML += optHtml
         })
         checkReminders()
     }
@@ -1134,6 +1152,179 @@
             const { error } = await supabase.from('inspection_logs').delete().eq('id', id)
             if (error) alert('Silme hatası: ' + error.message); else fetchInspections();
         }
+    }
+
+    // 📑 DİJİTAL GARAJ RAPORU (PDF) OLUŞTURMA FONKSİYONU
+    window.generateVehicleReport = function() {
+        const vehicleId = document.getElementById('report_vehicle_select').value
+        if (!vehicleId) {
+            alert('Lütfen raporunu oluşturmak istediğiniz aracı seçin!')
+            return
+        }
+
+        const vehicle = globalVehicles.find(v => v.id === vehicleId)
+        if (!vehicle) {
+            alert('Araç bulunamadı!')
+            return
+        }
+
+        const vehicleMaint = globalMaintenance.filter(m => m.vehicle_id === vehicleId)
+        const vehicleInsp = globalInspections.filter(i => i.vehicle_id === vehicleId)
+        const vehicleIns = globalInsurances.filter(s => s.vehicle_id === vehicleId)
+
+        let totalMaintCost = vehicleMaint.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0)
+        let totalInspCost = vehicleInsp.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0)
+        let totalInsCost = vehicleIns.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0)
+        let grandTotal = totalMaintCost + totalInspCost + totalInsCost
+
+        const reportWindow = window.open('', '_blank')
+        
+        const reportHtml = `
+            <!DOCTYPE html>
+            <html lang="tr">
+            <head>
+                <meta charset="UTF-8">
+                <title>GarajDefteri - ${vehicle.brand} ${vehicle.model} Raporu</title>
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #1e293b; background: #fff; }
+                    .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+                    .header h1 { margin: 0; color: #1e3a8a; font-size: 24px; }
+                    .header p { margin: 4px 0 0 0; font-size: 12px; color: #64748b; }
+                    .badge { background: #eff6ff; color: #2563eb; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+                    
+                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+                    .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 8px; }
+                    .card h3 { margin: 0 0 8px 0; font-size: 14px; color: #0f172a; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; }
+                    .card p { margin: 4px 0; font-size: 12px; }
+
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                    th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+                    th { background-color: #f1f5f9; color: #334155; font-weight: bold; }
+                    tr:nth-child(even) { background-color: #f8fafc; }
+
+                    .section-title { font-size: 15px; font-weight: bold; color: #0f172a; margin-top: 25px; margin-bottom: 8px; border-left: 4px solid #2563eb; padding-left: 8px; }
+                    .footer { margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #94a3b8; text-align: center; }
+                    
+                    @media print {
+                        body { padding: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <h1>🚗 GarajDefteri Dijital Garaj Karnesi</h1>
+                        <p>Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}</p>
+                    </div>
+                    <div class="badge">${vehicle.plate || 'PLAKASIZ'}</div>
+                </div>
+
+                <div class="grid">
+                    <div class="card">
+                        <h3>📋 Araç Bilgileri</h3>
+                        <p><strong>Marka / Model:</strong> ${vehicle.brand} ${vehicle.model}</p>
+                        <p><strong>Model Yılı:</strong> ${vehicle.year || '-'}</p>
+                        <p><strong>Güncel Kilometre:</strong> ${vehicle.current_km ? vehicle.current_km.toLocaleString('tr-TR') + ' KM' : '-'}</p>
+                    </div>
+                    <div class="card">
+                        <h3>💰 Harcama Özeti</h3>
+                        <p><strong>Bakım & Servis:</strong> ${totalMaintCost.toLocaleString('tr-TR')} TL</p>
+                        <p><strong>Sigorta & Kasko:</strong> ${totalInsCost.toLocaleString('tr-TR')} TL</p>
+                        <p><strong>Muayene:</strong> ${totalInspCost.toLocaleString('tr-TR')} TL</p>
+                        <p style="font-size: 13px; color: #2563eb; font-weight: bold; margin-top: 6px;">
+                            Toplam Masraf: ${grandTotal.toLocaleString('tr-TR')} TL
+                        </p>
+                    </div>
+                </div>
+
+                <div class="section-title">🔧 Periyodik Bakım ve Servis Geçmişi</div>
+                ${vehicleMaint.length > 0 ? `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>İşlem Tanımı</th>
+                                <th>İşlem KM</th>
+                                <th>Tutar (TL)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${vehicleMaint.map(m => `
+                                <tr>
+                                    <td>${m.date || '-'}</td>
+                                    <td>${m.title}</td>
+                                    <td>${m.km ? m.km.toLocaleString('tr-TR') + ' KM' : '-'}</td>
+                                    <td>${parseFloat(m.cost || 0).toLocaleString('tr-TR')} TL</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                ` : '<p style="font-size:12px; color:#64748b;">Kayıtlı bakım bulunmuyor.</p>'}
+
+                <div class="section-title">🛡️ Sigorta & Kasko Geçmişi</div>
+                ${vehicleIns.length > 0 ? `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tür</th>
+                                <th>Şirket</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>Tutar (TL)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${vehicleIns.map(s => `
+                                <tr>
+                                    <td>${s.insurance_type}</td>
+                                    <td>${s.company_name || '-'}</td>
+                                    <td>${s.start_date || '-'}</td>
+                                    <td>${s.expiry_date || '-'}</td>
+                                    <td>${parseFloat(s.cost || 0).toLocaleString('tr-TR')} TL</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                ` : '<p style="font-size:12px; color:#64748b;">Kayıtlı sigorta bulunmuyor.</p>'}
+
+                <div class="section-title">🔍 TÜVTÜRK Muayene Geçmişi</div>
+                ${vehicleInsp.length > 0 ? `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Muayene Tarihi</th>
+                                <th>Son Geçerlilik</th>
+                                <th>Tutar (TL)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${vehicleInsp.map(i => `
+                                <tr>
+                                    <td>${i.inspection_date || '-'}</td>
+                                    <td>${i.expiry_date || '-'}</td>
+                                    <td>${parseFloat(i.cost || 0).toLocaleString('tr-TR')} TL</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                ` : '<p style="font-size:12px; color:#64748b;">Kayıtlı muayene bulunmuyor.</p>'}
+
+                <div class="footer">
+                    Bu belge GarajDefteri uygulaması tarafından otomatik olarak üretilmiştir. © 2026 GarajDefteri
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                <\/script>
+            </body>
+            </html>
+        `
+
+        reportWindow.document.write(reportHtml)
+        reportWindow.document.close()
     }
 
     checkUserSession()
