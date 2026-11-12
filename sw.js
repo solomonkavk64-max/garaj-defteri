@@ -1,4 +1,4 @@
-const CACHE_NAME = 'garajdefteri-v5';
+const CACHE_NAME = 'garajdefteri-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -35,12 +35,12 @@ self.addEventListener('activate', (e) => {
 
 // 3. İstekleri yönetme (Ağ öncelikli strateji)
 self.addEventListener('fetch', (e) => {
-  // Supabase veya farklı alan adlarındaki API isteklerine asla müdahale etme (Direkt ağa bırak)
+  // Supabase veya farklı alan adlarındaki API isteklerine asla müdahale etme
   if (!e.request.url.startsWith(location.origin)) {
     return;
   }
 
-  // HTML ve sayfa istekleri için önce AĞI kontrol et (Güncellemelerin anında yansıması için)
+  // HTML ve sayfa istekleri için önce AĞI kontrol et
   if (e.request.mode === 'navigate' || e.request.url.endsWith('.html') || e.request.url.endsWith('/garaj-defteri/')) {
     e.respondWith(
       fetch(e.request)
@@ -51,14 +51,13 @@ self.addEventListener('fetch', (e) => {
           });
         })
         .catch(() => {
-          // İnternet yoksa veya sunucuya ulaşılamazsa önbellekteki son sürümü ver
           return caches.match(e.request);
         })
     );
     return;
   }
 
-  // Diğer statik dosyalar (ikonlar vb.) için standart önbellek kontrolü
+  // Diğer statik dosyalar için standart önbellek kontrolü
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       return cachedResponse || fetch(e.request);
