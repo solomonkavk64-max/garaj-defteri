@@ -564,7 +564,6 @@
     import { supabase } from './supabase.js'
 
     // 🛡️ ZORUNLU EMNİYET ZAMANLAYICISI (FAIL-SAFE)
-    // Ağ veya oturum kontrolü gecikse bile 3 saniye içinde splash ekranını zorla kapatır
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
         if (splash && splash.style.display !== 'none') {
@@ -573,13 +572,16 @@
         }
     }, 3000);
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then((reg) => console.log('Service Worker registered', reg))
-                .catch((err) => console.log('Service Worker registration failed', err));
-        });
-    }
+    /* 
+       GEÇİCİ OLARAK SERVICE WORKER DEVREDŞI (Önbellek takılmasını önlemek için)
+       if ('serviceWorker' in navigator) {
+           window.addEventListener('load', () => {
+               navigator.serviceWorker.register('./sw.js')
+                   .then((reg) => console.log('Service Worker registered', reg))
+                   .catch((err) => console.log('Service Worker registration failed', err));
+           });
+       }
+    */
 
     let globalVehicles = []
     let globalMaintenance = []
@@ -771,7 +773,22 @@
                 }
             }
         })
-        if (log.next_km && vehicle && vehicle.current_km) {
+
+        globalMaintenance.forEach(log => {
+            const vehicle = globalVehicles.find(v => v.id === log.vehicle_id)
+            const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
+            if (log.next_date) {
+                const nextDate = new Date(log.next_date)
+                const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24))
+                if (diffDays <= 15 && diffDays >= 0) {
+                    hasWarning = true
+                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihine <strong>${diffDays} gün</strong> kaldı!<br>`
+                } else if (diffDays < 0) {
+                    hasWarning = true
+                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihi <strong>geldi/geçti!</strong><br>`
+                }
+            }
+            if (log.next_km && vehicle && vehicle.current_km) {
                 const kmDiff = log.next_km - vehicle.current_km
                 if (kmDiff <= 1000 && kmDiff >= 0) {
                     hasWarning = true
@@ -885,7 +902,6 @@
         })
         checkReminders()
     }
-
     async function fetchInsurances() {
         const insDiv = document.getElementById('insurance-list')
         const { data, error } = await supabase.from('insurance_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
@@ -1127,7 +1143,7 @@
                 fetchLogs(); 
                 fetchInspections(); 
             }
-     }
+        }
     }
 
     window.deleteInsurance = async function(id) {
