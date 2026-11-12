@@ -500,7 +500,7 @@
         <div class="form-group">
             <h3>🔍 TÜVTÜRK Muayene Kaydı Ekle</h3>
             <label for="inspection_vehicle_select">Araç Seçin:</label>
-        <select id="inspection_vehicle_select"><option value="">Araç yükleniyor...</option></select>
+            <select id="inspection_vehicle_select"><option value="">Araç yükleniyor...</option></select>
             <label>Muayene Tarihi:</label><input type="date" id="insp_date">
             <label>Sonraki Geçerlilik Tarihi:</label><input type="date" id="insp_expiry">
             <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL)">
@@ -562,15 +562,6 @@
 
 <script type="module">
     import { supabase } from './supabase.js'
-
-    // 🛡️ ZORUNLU EMNİYET ZAMANLAYICISI (FAIL-SAFE)
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        if (splash && splash.style.display !== 'none') {
-            splash.style.opacity = '0';
-            setTimeout(() => { splash.style.display = 'none'; }, 600);
-        }
-    }, 3000);
 
     let globalVehicles = []
     let globalMaintenance = []
@@ -650,7 +641,6 @@
         document.getElementById('update-password-container').style.display = 'none';
         document.getElementById('app-content').style.display = 'block';
         loadAllData();
-        hideSplashScreen();
     }
 
     function showAuthView() {
@@ -658,10 +648,9 @@
         document.getElementById('auth-container').style.display = 'block';
         document.getElementById('update-password-container').style.display = 'none';
         document.getElementById('app-content').style.display = 'none';
-        hideSplashScreen();
     }
 
-    // Oturum durumunu anlık dinle (Giriş döngüsünü önler)
+    // Oturum durumunu anlık dinle
     supabase.auth.onAuthStateChange((event, session) => {
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
             showAppView(session);
@@ -680,11 +669,15 @@
                 document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('app-content').style.display = 'none';
                 document.getElementById('update-password-container').style.display = 'block';
-                hideSplashScreen();
                 return;
             }
 
-            const { data: { session }, error } = await supabase.auth.getSession();
+            // Açılış animasyonunun (splash) en az 1.5 saniye ekranda kalmasını sağlayan şık gecikme
+            const minSplashTime = new Promise(resolve => setTimeout(resolve, 1500));
+            const sessionPromise = supabase.auth.getSession();
+            
+            const [sessionResult] = await Promise.all([sessionPromise, minSplashTime]);
+            const { data: { session }, error } = sessionResult;
             if (error) throw error;
 
             if (session) {
@@ -695,6 +688,8 @@
         } catch (err) {
             console.error('Oturum kontrol hatası:', err);
             showAuthView();
+        } finally {
+            hideSplashScreen();
         }
     }
 
@@ -944,70 +939,6 @@
 
         insDiv.innerHTML = '';
         globalInsurances.forEach(ins => {
-            const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç';
-            const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : '';
-            const companyInfo = ins.company_name ? ` (${ins.company_name})` : '';
-            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : '';
-            const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`);
-
-            insDiv.innerHTML += `
-                <div class="insurance-card">
-                    <strong>${vehicleInfo} - ${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
-                    Başlangıç: ${ins.start_date} | <strong>Bitiş: ${ins.expiry_date}</strong>${reportHtml}<br>
-                    <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>
-                    <br><button class="btn-danger" onclick="deleteInsurance('${ins.id}')">Poliçeyi Sil</button>
-                </div>
-            `;
-        });
-        calculateTotalCost();
-    }
-
-    async function fetchLogs() {
-        const logDiv = document.getElementById('log-list');
-        const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false });
-        if (error) { logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message; return; }
-
-        globalMaintenance = data || [];
-        checkReminders();
-
-        if (globalMaintenance.length === 0) { logDiv.innerHTML = 'Henüz bakım kaydı yok.'; calculateTotalCost(); return; }
-
-        logDiv.innerHTML = '';
-        globalMaintenance.forEach(log => {
-            const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç';
-            const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : '';
-            const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : '';
-            
-            let calBtn = '';
-            if (log.next_date) {
-                const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} bakım zamanı!`);
-                calBtn = `<br><a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>`;
-            }
-
-            logDiv.innerHTML += `
-                <div class="log-card">
-                    <strong>${vehicleInfo} - ${log.title}</strong><br>
-                    Tutar: ${log.cost} TL | İşlem KM: ${log.km || '-'}<br>
-                    Tarih: ${log.date || '-'}${nextInfo}${reportHtml}${calBtn}
-                    <br><button class="btn-danger" onclick="deleteLog('${log.id}')">Bakım Kaydını Sil</button>
-                </div>
-            `;
-        });
-        calculateTotalCost();
-    }
-
-    async function fetchInspections() {
-        const inspDiv = document.getElementById('inspection-list');
-        const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true });
-        if (error) { inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message; return; }
-
-        globalInspections = data || [];
-        checkReminders();
-
-        if (globalInspections.length === 0) { inspDiv.innerHTML = 'Henüz muayene kaydı yok.'; calculateTotalCost(); return; }
-
-        inspDiv.innerHTML = '';
-        globalInspections.forEach(insp => {
             const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç';
             const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : '';
             const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Muayene Raporu</a>` : '';
@@ -1285,7 +1216,7 @@
                 ${vehicleMaint.length > 0 ? `
                     <table>
                         <thead>
-                        <tr>
+                            <tr>
                                 <th>Tarih</th>
                                 <th>İşlem Tanımı</th>
                                 <th>İşlem KM</th>
@@ -1370,10 +1301,9 @@
         reportWindow.document.close();
     }
 
+    // Uygulama başlatıcısı
     checkUserSession();
 </script>
 
 </body>
 </html>
-                        
- 
