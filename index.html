@@ -500,7 +500,7 @@
         <div class="form-group">
             <h3>🔍 TÜVTÜRK Muayene Kaydı Ekle</h3>
             <label for="inspection_vehicle_select">Araç Seçin:</label>
-            <select id="inspection_vehicle_select"><option value="">Araç yükleniyor...</option></select>
+        <select id="inspection_vehicle_select"><option value="">Araç yükleniyor...</option></select>
             <label>Muayene Tarihi:</label><input type="date" id="insp_date">
             <label>Sonraki Geçerlilik Tarihi:</label><input type="date" id="insp_expiry">
             <input type="number" id="insp_cost" placeholder="Muayene Ücreti (TL)">
@@ -644,6 +644,32 @@
         }
     }
 
+    function showAppView(session) {
+        currentUserId = session.user.id;
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('update-password-container').style.display = 'none';
+        document.getElementById('app-content').style.display = 'block';
+        loadAllData();
+        hideSplashScreen();
+    }
+
+    function showAuthView() {
+        currentUserId = null;
+        document.getElementById('auth-container').style.display = 'block';
+        document.getElementById('update-password-container').style.display = 'none';
+        document.getElementById('app-content').style.display = 'none';
+        hideSplashScreen();
+    }
+
+    // Oturum durumunu anlık dinle (Giriş döngüsünü önler)
+    supabase.auth.onAuthStateChange((event, session) => {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+            showAppView(session);
+        } else if (event === 'SIGNED_OUT') {
+            showAuthView();
+        }
+    });
+
     async function checkUserSession() {
         try {
             const hash = window.location.hash;
@@ -651,242 +677,243 @@
             
             if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
                 (search && (search.includes('type=recovery') || search.includes('access_token')))) {
-                document.getElementById('auth-container').style.display = 'none'
-                document.getElementById('app-content').style.display = 'none'
-                document.getElementById('update-password-container').style.display = 'block'
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('app-content').style.display = 'none';
+                document.getElementById('update-password-container').style.display = 'block';
                 hideSplashScreen();
                 return;
             }
 
-            const { data: { session }, error } = await supabase.auth.getSession()
+            const { data: { session }, error } = await supabase.auth.getSession();
             if (error) throw error;
 
             if (session) {
-                currentUserId = session.user.id
-                document.getElementById('auth-container').style.display = 'none'
-                document.getElementById('update-password-container').style.display = 'none'
-                document.getElementById('app-content').style.display = 'block'
-                await loadAllData()
+                showAppView(session);
             } else {
-                currentUserId = null
-                document.getElementById('auth-container').style.display = 'block'
-                document.getElementById('update-password-container').style.display = 'none'
-                document.getElementById('app-content').style.display = 'none'
+                showAuthView();
             }
         } catch (err) {
-            console.error('Oturum kontrol hatası:', err)
-            document.getElementById('auth-container').style.display = 'block'
-            document.getElementById('update-password-container').style.display = 'none'
-            document.getElementById('app-content').style.display = 'none'
-        } finally {
-            hideSplashScreen();
+            console.error('Oturum kontrol hatası:', err);
+            showAuthView();
         }
     }
 
     window.handleLogin = async function() {
-        const email = document.getElementById('auth_email').value
-        const password = document.getElementById('auth_password').value
+        const email = document.getElementById('auth_email').value.trim();
+        const password = document.getElementById('auth_password').value;
         if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) alert('Giriş başarısız: ' + error.message); else checkUserSession();
+        
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+            alert('Giriş başarısız: ' + error.message);
+        } else if (data && data.session) {
+            showAppView(data.session);
+        }
     }
 
     window.handleSignup = async function() {
-        const email = document.getElementById('auth_email').value
-        const password = document.getElementById('auth_password').value
+        const email = document.getElementById('auth_email').value.trim();
+        const password = document.getElementById('auth_password').value;
         if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
-        const { error } = await supabase.auth.signUp({ email, password })
-        if (error) alert('Kayıt başarısız: ' + error.message); else alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+        
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+            alert('Kayıt başarısız: ' + error.message);
+        } else if (data && data.session) {
+            showAppView(data.session);
+        } else {
+            alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+        }
     }
 
     window.handleForgotPassword = async function() {
-        const email = document.getElementById('auth_email').value
+        const email = document.getElementById('auth_email').value.trim();
         if (!email) { alert('Lütfen şifresini unuttuğunuz e-posta adresinizi üstteki kutuya yazın!'); return; }
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
         if (error) {
-            alert('İşlem başarısız: ' + error.message)
+            alert('İşlem başarısız: ' + error.message);
         } else {
-            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! Gelen kutunuzu (veya spam klasörünü) kontrol edebilirsiniz.')
+            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! Gelen kutunuzu (veya spam klasörünü) kontrol edebilirsiniz.');
         }
     }
 
     window.handleUpdatePassword = async function() {
-        const newPassword = document.getElementById('new_password').value
+        const newPassword = document.getElementById('new_password').value;
         if (!newPassword) { alert('Lütfen yeni şifrenizi girin!'); return; }
 
-        const { error } = await supabase.auth.updateUser({ password: newPassword })
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) {
-            alert('Şifre güncellenemedi: ' + error.message)
+            alert('Şifre güncellenemedi: ' + error.message);
         } else {
-            alert('Şifreniz başarıyla değiştirildi! Giriş yapıldı.')
-            window.location.hash = ''
-            window.location.search = ''
-            window.location.href = window.location.pathname
+            alert('Şifreniz başarıyla değiştirildi! Giriş yapıldı.');
+            window.location.hash = '';
+            window.location.search = '';
+            window.location.href = window.location.pathname;
         }
     }
 
     window.handleLogout = async function() {
-        await supabase.auth.signOut()
-        checkUserSession()
+        await supabase.auth.signOut();
+        showAuthView();
     }
 
     async function loadAllData() {
-        await fetchVehicles()
-        await fetchInsurances()
-        await fetchLogs()
-        await fetchInspections()
-        document.getElementById('log_date').valueAsDate = new Date()
-        document.getElementById('insp_date').valueAsDate = new Date()
-        document.getElementById('ins_start_date').valueAsDate = new Date()
+        await fetchVehicles();
+        await fetchInsurances();
+        await fetchLogs();
+        await fetchInspections();
+        document.getElementById('log_date').valueAsDate = new Date();
+        document.getElementById('insp_date').valueAsDate = new Date();
+        document.getElementById('ins_start_date').valueAsDate = new Date();
     }
 
     function checkReminders() {
-        const alertBox = document.getElementById('alert-container')
-        const today = new Date()
-        let warningText = ""
-        let hasWarning = false
+        const alertBox = document.getElementById('alert-container');
+        const today = new Date();
+        let warningText = "";
+        let hasWarning = false;
 
         globalInsurances.forEach(ins => {
             if (ins.expiry_date) {
-                const expiryDate = new Date(ins.expiry_date)
-                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
-                const vehicleName = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
+                const expiryDate = new Date(ins.expiry_date);
+                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                const vehicleName = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç';
                 if (diffDays <= 15 && diffDays >= 0) {
-                    hasWarning = true
-                    warningText += `🛡️ <strong>${vehicleName}</strong> ${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>`
+                    hasWarning = true;
+                    warningText += `🛡️ <strong>${vehicleName}</strong> ${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>`;
                 } else if (diffDays < 0) {
-                    hasWarning = true
-                    warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`
+                    hasWarning = true;
+                    warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`;
                 }
             }
-        })
+        });
 
         globalInspections.forEach(insp => {
             if (insp.expiry_date) {
-                const expiryDate = new Date(insp.expiry_date)
-                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
-                const vehicleName = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
+                const expiryDate = new Date(insp.expiry_date);
+                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                const vehicleName = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç';
                 if (diffDays <= 30 && diffDays >= 0) {
-                    hasWarning = true
-                    warningText += `⚠️ <strong>${vehicleName}</strong> muayenesine <strong>${diffDays} gün</strong> kaldı!<br>`
+                    hasWarning = true;
+                    warningText += `⚠️ <strong>${vehicleName}</strong> muayenesine <strong>${diffDays} gün</strong> kaldı!<br>`;
                 } else if (diffDays < 0) {
-                    hasWarning = true
-                    warningText += `🚨 <strong>${vehicleName}</strong> muayene süresi <strong>GEÇMİŞ!</strong><br>`
+                    hasWarning = true;
+                    warningText += `🚨 <strong>${vehicleName}</strong> muayene süresi <strong>GEÇMİŞ!</strong><br>`;
                 }
             }
-        })
+        });
 
         globalMaintenance.forEach(log => {
-            const vehicle = globalVehicles.find(v => v.id === log.vehicle_id)
-            const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
+            const vehicle = globalVehicles.find(v => v.id === log.vehicle_id);
+            const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç';
             if (log.next_date) {
-                const nextDate = new Date(log.next_date)
-                const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24))
+                const nextDate = new Date(log.next_date);
+                const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
                 if (diffDays <= 15 && diffDays >= 0) {
-                    hasWarning = true
-                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihine <strong>${diffDays} gün</strong> kaldı!<br>`
+                    hasWarning = true;
+                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihine <strong>${diffDays} gün</strong> kaldı!<br>`;
                 } else if (diffDays < 0) {
-                    hasWarning = true
-                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihi <strong>geldi/geçti!</strong><br>`
+                    hasWarning = true;
+                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihi <strong>geldi/geçti!</strong><br>`;
                 }
             }
             if (log.next_km && vehicle && vehicle.current_km) {
-                const kmDiff = log.next_km - vehicle.current_km
+                const kmDiff = log.next_km - vehicle.current_km;
                 if (kmDiff <= 1000 && kmDiff >= 0) {
-                    hasWarning = true
-                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresine <strong>${kmDiff} KM</strong> kaldı!<br>`
+                    hasWarning = true;
+                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresine <strong>${kmDiff} KM</strong> kaldı!<br>`;
                 } else if (kmDiff < 0) {
-                    hasWarning = true
-                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresini <strong>${Math.abs(kmDiff)} KM</strong> aştınız!<br>`
+                    hasWarning = true;
+                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresini <strong>${Math.abs(kmDiff)} KM</strong> aştınız!<br>`;
                 }
             }
-        })
+        });
 
         if (hasWarning) {
-            alertBox.innerHTML = warningText
-            alertBox.style.display = "block"
+            alertBox.innerHTML = warningText;
+            alertBox.style.display = "block";
         } else {
-            alertBox.style.display = "none"
+            alertBox.style.display = "none";
         }
     }
 
     function getGoogleCalendarUrl(title, dateStr, details) {
-        const dateFormatted = dateStr.replace(/-/g, '')
-        return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dateFormatted}/${dateFormatted}&details=${encodeURIComponent(details)}`
+        const dateFormatted = dateStr.replace(/-/g, '');
+        return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dateFormatted}/${dateFormatted}&details=${encodeURIComponent(details)}`;
     }
 
     window.calculateTotalCost = function() {
-        const costDisplay = document.getElementById('total-cost-display')
-        const startDateVal = document.getElementById('filter_start_date').value
-        const endDateVal = document.getElementById('filter_end_date').value
-        const startDate = startDateVal ? new Date(startDateVal) : null
-        const endDate = endDateVal ? new Date(endDateVal) : null
+        const costDisplay = document.getElementById('total-cost-display');
+        const startDateVal = document.getElementById('filter_start_date').value;
+        const endDateVal = document.getElementById('filter_end_date').value;
+        const startDate = startDateVal ? new Date(startDateVal) : null;
+        const endDate = endDateVal ? new Date(endDateVal) : null;
 
-        if (startDate) startDate.setHours(0, 0, 0, 0)
-        if (endDate) endDate.setHours(23, 59, 59, 999)
+        if (startDate) startDate.setHours(0, 0, 0, 0);
+        if (endDate) endDate.setHours(23, 59, 59, 999);
 
-        let totalMaint = 0
+        let totalMaint = 0;
         globalMaintenance.forEach(item => {
-            const itemDate = item.date ? new Date(item.date) : null
-            let pass = true
-            if (startDate && itemDate && itemDate < startDate) pass = false
-            if (endDate && itemDate && itemDate > endDate) pass = false
-            if (pass) totalMaint += parseFloat(item.cost) || 0
-        })
+            const itemDate = item.date ? new Date(item.date) : null;
+            let pass = true;
+            if (startDate && itemDate && itemDate < startDate) pass = false;
+            if (endDate && itemDate && itemDate > endDate) pass = false;
+            if (pass) totalMaint += parseFloat(item.cost) || 0;
+        });
 
-        let totalInsp = 0
+        let totalInsp = 0;
         globalInspections.forEach(item => {
-            const itemDate = item.inspection_date ? new Date(item.inspection_date) : null
-            let pass = true
-            if (startDate && itemDate && itemDate < startDate) pass = false
-            if (endDate && itemDate && itemDate > endDate) pass = false
-            if (pass) totalInsp += parseFloat(item.cost) || 0
-        })
+            const itemDate = item.inspection_date ? new Date(item.inspection_date) : null;
+            let pass = true;
+            if (startDate && itemDate && itemDate < startDate) pass = false;
+            if (endDate && itemDate && itemDate > endDate) pass = false;
+            if (pass) totalInsp += parseFloat(item.cost) || 0;
+        });
 
-        let totalIns = 0
+        let totalIns = 0;
         globalInsurances.forEach(item => {
-            const itemDate = item.start_date ? new Date(item.start_date) : null
-            let pass = true
-            if (startDate && itemDate && itemDate < startDate) pass = false
-            if (endDate && itemDate && itemDate > endDate) pass = false
-            if (pass) totalIns += parseFloat(item.cost) || 0
-        })
+            const itemDate = item.start_date ? new Date(item.start_date) : null;
+            let pass = true;
+            if (startDate && itemDate && itemDate < startDate) pass = false;
+            if (endDate && itemDate && itemDate > endDate) pass = false;
+            if (pass) totalIns += parseFloat(item.cost) || 0;
+        });
 
-        const grandTotal = totalMaint + totalInsp + totalIns
-        let infoText = "Tüm Zamanlar"
-        if (startDateVal && endDateVal) infoText = `${startDateVal} - ${endDateVal}`
+        const grandTotal = totalMaint + totalInsp + totalIns;
+        let infoText = "Tüm Zamanlar";
+        if (startDateVal && endDateVal) infoText = `${startDateVal} - ${endDateVal}`;
 
         costDisplay.innerHTML = `Harcama (${infoText}): <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
-            <span style="font-size: 11px; color: var(--text-muted);">(Bakım: ${totalMaint.toLocaleString('tr-TR')} | Muayene: ${totalInsp.toLocaleString('tr-TR')} | Sigorta: ${totalIns.toLocaleString('tr-TR')})</span>`
+            <span style="font-size: 11px; color: var(--text-muted);">(Bakım: ${totalMaint.toLocaleString('tr-TR')} | Muayene: ${totalInsp.toLocaleString('tr-TR')} | Sigorta: ${totalIns.toLocaleString('tr-TR')})</span>`;
     }
 
     window.resetDateFilter = function() {
-        document.getElementById('filter_start_date').value = ''
-        document.getElementById('filter_end_date').value = ''
-        calculateTotalCost()
+        document.getElementById('filter_start_date').value = '';
+        document.getElementById('filter_end_date').value = '';
+        calculateTotalCost();
     }
 
     async function fetchVehicles() {
-        const listDiv = document.getElementById('vehicle-list')
-        const selectBox = document.getElementById('vehicle_select')
-        const inspSelectBox = document.getElementById('inspection_vehicle_select')
-        const kmSelectBox = document.getElementById('km_vehicle_select')
-        const insSelectBox = document.getElementById('insurance_vehicle_select')
-        const reportSelectBox = document.getElementById('report_vehicle_select')
+        const listDiv = document.getElementById('vehicle-list');
+        const selectBox = document.getElementById('vehicle_select');
+        const inspSelectBox = document.getElementById('inspection_vehicle_select');
+        const kmSelectBox = document.getElementById('km_vehicle_select');
+        const insSelectBox = document.getElementById('insurance_vehicle_select');
+        const reportSelectBox = document.getElementById('report_vehicle_select');
         
-        const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false })
+        const { data, error } = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
         if (error) { listDiv.innerHTML = 'Hata: ' + error.message; return; }
 
-        globalVehicles = data || []
-        selectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
-        inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
-        kmSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
-        insSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
-        if (reportSelectBox) reportSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>'
+        globalVehicles = data || [];
+        selectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
+        inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
+        kmSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
+        insSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
+        if (reportSelectBox) reportSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
 
         if (globalVehicles.length === 0) { listDiv.innerHTML = 'Henüz eklenmiş araç yok.'; return; }
 
-        listDiv.innerHTML = ''
+        listDiv.innerHTML = '';
         globalVehicles.forEach(vehicle => {
             listDiv.innerHTML += `
                 <div class="vehicle-card">
@@ -894,34 +921,97 @@
                     Plaka: ${vehicle.plate || 'Belirtilmemiş'} | KM: ${vehicle.current_km}<br>
                     <button class="btn-danger" onclick="deleteVehicle('${vehicle.id}')">Aracı Sil</button>
                 </div>
-            `
-            const optHtml = `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.plate || 'Plakasız'})</option>`
-            selectBox.innerHTML += optHtml
-            inspSelectBox.innerHTML += optHtml
-            kmSelectBox.innerHTML += optHtml
-            insSelectBox.innerHTML += optHtml
-            if (reportSelectBox) reportSelectBox.innerHTML += optHtml
-        })
-        checkReminders()
+            `;
+            const optHtml = `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.plate || 'Plakasız'})</option>`;
+            selectBox.innerHTML += optHtml;
+            inspSelectBox.innerHTML += optHtml;
+            kmSelectBox.innerHTML += optHtml;
+            insSelectBox.innerHTML += optHtml;
+            if (reportSelectBox) reportSelectBox.innerHTML += optHtml;
+        });
+        checkReminders();
     }
 
     async function fetchInsurances() {
-        const insDiv = document.getElementById('insurance-list')
-        const { data, error } = await supabase.from('insurance_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
+        const insDiv = document.getElementById('insurance-list');
+        const { data, error } = await supabase.from('insurance_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true });
         if (error) { insDiv.innerHTML = 'Sigortalar yüklenemedi: ' + error.message; return; }
 
-        globalInsurances = data || []
-        checkReminders()
+        globalInsurances = data || [];
+        checkReminders();
 
         if (globalInsurances.length === 0) { insDiv.innerHTML = 'Henüz sigorta/kasko kaydı yok.'; calculateTotalCost(); return; }
 
-        insDiv.innerHTML = ''
+        insDiv.innerHTML = '';
         globalInsurances.forEach(ins => {
-            const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
-            const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : ''
-            const companyInfo = ins.company_name ? ` (${ins.company_name})` : ''
-            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : ''
-            const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi bitiyor!`)
+            const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç';
+            const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : '';
+            const companyInfo = ins.company_name ? ` (${ins.company_name})` : '';
+            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : '';
+            const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`);
+
+            insDiv.innerHTML += `
+                <div class="insurance-card">
+                    <strong>${vehicleInfo} - ${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
+                    Başlangıç: ${ins.start_date} | <strong>Bitiş: ${ins.expiry_date}</strong>${reportHtml}<br>
+                    <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>
+                    <br><button class="btn-danger" onclick="deleteInsurance('${ins.id}')">Poliçeyi Sil</button>
+                </div>
+            `;
+        });
+        calculateTotalCost();
+    }
+
+    async function fetchLogs() {
+        const logDiv = document.getElementById('log-list');
+        const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false });
+        if (error) { logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message; return; }
+
+        globalMaintenance = data || [];
+        checkReminders();
+
+        if (globalMaintenance.length === 0) { logDiv.innerHTML = 'Henüz bakım kaydı yok.'; calculateTotalCost(); return; }
+
+        logDiv.innerHTML = '';
+        globalMaintenance.forEach(log => {
+            const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç';
+            const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : '';
+            const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : '';
+            
+            let calBtn = '';
+            if (log.next_date) {
+                const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} bakım zamanı!`);
+                calBtn = `<br><a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>`;
+            }
+
+            logDiv.innerHTML += `
+                <div class="log-card">
+                    <strong>${vehicleInfo} - ${log.title}</strong><br>
+                    Tutar: ${log.cost} TL | İşlem KM: ${log.km || '-'}<br>
+                    Tarih: ${log.date || '-'}${nextInfo}${reportHtml}${calBtn}
+                    <br><button class="btn-danger" onclick="deleteLog('${log.id}')">Bakım Kaydını Sil</button>
+                </div>
+            `;
+        });
+        calculateTotalCost();
+    }
+
+    async function fetchInspections() {
+        const inspDiv = document.getElementById('inspection-list');
+        const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true });
+        if (error) { inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message; return; }
+
+        globalInspections = data || [];
+        checkReminders();
+
+        if (globalInspections.length === 0) { inspDiv.innerHTML = 'Henüz muayene kaydı yok.'; calculateTotalCost(); return; }
+
+        inspDiv.innerHTML = '';
+        globalInspections.forEach(insp => {
+            const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç';
+            const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : '';
+            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Muayene Raporu</a>` : '';
+            const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi bitiyor!`);
 
             inspDiv.innerHTML += `
                 <div class="inspection-card">
@@ -930,61 +1020,61 @@
                     <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>
                     <br><button class="btn-danger" onclick="deleteInspection('${insp.id}')">Muayene Kaydını Sil</button>
                 </div>
-            `
-        })
-        calculateTotalCost()
+            `;
+        });
+        calculateTotalCost();
     }
 
     window.addVehicle = async function() {
-        const brand = document.getElementById('brand').value
-        const model = document.getElementById('model').value
-        const year = document.getElementById('year').value
-        const current_km = document.getElementById('current_km').value
-        const plate = document.getElementById('plate').value
+        const brand = document.getElementById('brand').value;
+        const model = document.getElementById('model').value;
+        const year = document.getElementById('year').value;
+        const current_km = document.getElementById('current_km').value;
+        const plate = document.getElementById('plate').value;
         if (!brand || !model || !current_km) { alert('Lütfen marka, model ve kilometre alanlarını doldurun!'); return; }
-        const { error } = await supabase.from('vehicles').insert([{ user_id: currentUserId, brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }])
+        const { error } = await supabase.from('vehicles').insert([{ user_id: currentUserId, brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }]);
         if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Araç eklendi!'); document.getElementById('brand').value = ''; document.getElementById('model').value = ''; document.getElementById('year').value = ''; document.getElementById('current_km').value = ''; document.getElementById('plate').value = ''; fetchVehicles(); }
     }
 
     window.updateVehicleKm = async function() {
-        const vehicle_id = document.getElementById('km_vehicle_select').value
-        const new_km = document.getElementById('new_km').value
+        const vehicle_id = document.getElementById('km_vehicle_select').value;
+        const new_km = document.getElementById('new_km').value;
         if (!vehicle_id || !new_km) { alert('Lütfen araç seçin ve yeni KM girin!'); return; }
-        const { error } = await supabase.from('vehicles').update({ current_km: parseInt(new_km) }).eq('id', vehicle_id)
+        const { error } = await supabase.from('vehicles').update({ current_km: parseInt(new_km) }).eq('id', vehicle_id);
         if (error) alert('Güncellenemedi: ' + error.message); else { alert('KM güncellendi!'); document.getElementById('new_km').value = ''; fetchVehicles(); fetchLogs(); }
     }
 
     window.addInsuranceLog = async function() {
-        const vehicle_id = document.getElementById('insurance_vehicle_select').value
-        const insurance_type = document.getElementById('insurance_type').value
-        const company_name = document.getElementById('company_name').value
-        const start_date = document.getElementById('ins_start_date').value
-        const expiry_date = document.getElementById('ins_expiry_date').value
-        const cost = document.getElementById('ins_cost').value
-        const fileInput = document.getElementById('policy_file')
-        const btn = document.getElementById('btn_add_ins')
+        const vehicle_id = document.getElementById('insurance_vehicle_select').value;
+        const insurance_type = document.getElementById('insurance_type').value;
+        const company_name = document.getElementById('company_name').value;
+        const start_date = document.getElementById('ins_start_date').value;
+        const expiry_date = document.getElementById('ins_expiry_date').value;
+        const cost = document.getElementById('ins_cost').value;
+        const fileInput = document.getElementById('policy_file');
+        const btn = document.getElementById('btn_add_ins');
 
         if (!vehicle_id || !start_date || !expiry_date) { alert('Lütfen araç ve tarih alanlarını doldurun!'); return; }
 
         btn.disabled = true;
         btn.innerText = "Kaydediliyor...";
 
-        let policy_url = null
+        let policy_url = null;
         if (fileInput.files.length > 0) {
-            let file = fileInput.files[0]
-            file = await compressImage(file)
-            const fileName = `ins_${Date.now()}_${file.name}`
-            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            let file = fileInput.files[0];
+            file = await compressImage(file);
+            const fileName = `ins_${Date.now()}_${file.name}`;
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file);
             if (uploadError) { 
                 alert('Dosya yükleme hatası: ' + uploadError.message); 
                 btn.disabled = false; btn.innerText = "Poliçeyi Kaydet";
                 return; 
             }
-            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
-            policy_url = publicUrlData.publicUrl
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
+            policy_url = publicUrlData.publicUrl;
         }
 
-        const { error } = await supabase.from('insurance_logs').insert([{ user_id: currentUserId, vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url }])
+        const { error } = await supabase.from('insurance_logs').insert([{ user_id: currentUserId, vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url }]);
         
         btn.disabled = false;
         btn.innerText = "Poliçeyi Kaydet";
@@ -993,37 +1083,37 @@
     }
 
     window.addMaintenanceLog = async function() {
-        const vehicle_id = document.getElementById('vehicle_select').value
-        const title = document.getElementById('title').value
-        const cost = document.getElementById('cost').value
-        const km = document.getElementById('log_km').value
-        const date = document.getElementById('log_date').value
-        const next_km = document.getElementById('next_km').value
-        const next_date = document.getElementById('next_date').value
-        const fileInput = document.getElementById('receipt_file')
-        const btn = document.getElementById('btn_add_log')
+        const vehicle_id = document.getElementById('vehicle_select').value;
+        const title = document.getElementById('title').value;
+        const cost = document.getElementById('cost').value;
+        const km = document.getElementById('log_km').value;
+        const date = document.getElementById('log_date').value;
+        const next_km = document.getElementById('next_km').value;
+        const next_date = document.getElementById('next_date').value;
+        const fileInput = document.getElementById('receipt_file');
+        const btn = document.getElementById('btn_add_log');
 
         if (!vehicle_id || !title || !cost) { alert('Lütfen zorunlu alanları doldurun!'); return; }
 
         btn.disabled = true;
         btn.innerText = "Kaydediliyor...";
 
-        let receipt_url = null
+        let receipt_url = null;
         if (fileInput.files.length > 0) {
-            let file = fileInput.files[0]
-            file = await compressImage(file)
-            const fileName = `maint_${Date.now()}_${file.name}`
-            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            let file = fileInput.files[0];
+            file = await compressImage(file);
+            const fileName = `maint_${Date.now()}_${file.name}`;
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file);
             if (uploadError) { 
                 alert('Dosya yükleme hatası: ' + uploadError.message); 
                 btn.disabled = false; btn.innerText = "Bakım Kaydını Ekle";
                 return; 
             }
-            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
-            receipt_url = publicUrlData.publicUrl
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
+            receipt_url = publicUrlData.publicUrl;
         }
 
-        const { error } = await supabase.from('maintenance_logs').insert([{ user_id: currentUserId, vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, next_km: next_km ? parseInt(next_km) : null, next_date: next_date || null, receipt_url }])
+        const { error } = await supabase.from('maintenance_logs').insert([{ user_id: currentUserId, vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, next_km: next_km ? parseInt(next_km) : null, next_date: next_date || null, receipt_url }]);
         
         btn.disabled = false;
         btn.innerText = "Bakım Kaydını Ekle";
@@ -1032,34 +1122,34 @@
     }
 
     window.addInspectionLog = async function() {
-        const vehicle_id = document.getElementById('inspection_vehicle_select').value
-        const inspection_date = document.getElementById('insp_date').value
-        const expiry_date = document.getElementById('insp_expiry').value
-        const cost = document.getElementById('insp_cost').value
-        const fileInput = document.getElementById('report_file')
-        const btn = document.getElementById('btn_add_insp')
+        const vehicle_id = document.getElementById('inspection_vehicle_select').value;
+        const inspection_date = document.getElementById('insp_date').value;
+        const expiry_date = document.getElementById('insp_expiry').value;
+        const cost = document.getElementById('insp_cost').value;
+        const fileInput = document.getElementById('report_file');
+        const btn = document.getElementById('btn_add_insp');
 
         if (!vehicle_id || !inspection_date || !expiry_date) { alert('Lütfen tarih alanlarını doldurun!'); return; }
 
         btn.disabled = true;
         btn.innerText = "Kaydediliyor...";
 
-        let report_url = null
+        let report_url = null;
         if (fileInput.files.length > 0) {
-            let file = fileInput.files[0]
-            file = await compressImage(file)
-            const fileName = `insp_${Date.now()}_${file.name}`
-            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file)
+            let file = fileInput.files[0];
+            file = await compressImage(file);
+            const fileName = `insp_${Date.now()}_${file.name}`;
+            const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, file);
             if (uploadError) { 
                 alert('Dosya yükleme hatası: ' + uploadError.message); 
                 btn.disabled = false; btn.innerText = "Muayene Kaydını Ekle";
                 return; 
             }
-            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
-            report_url = publicUrlData.publicUrl
+            const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
+            report_url = publicUrlData.publicUrl;
         }
 
-        const { error } = await supabase.from('inspection_logs').insert([{ user_id: currentUserId, vehicle_id, inspection_date, expiry_date, cost: cost ? parseFloat(cost) : null, report_url }])
+        const { error } = await supabase.from('inspection_logs').insert([{ user_id: currentUserId, vehicle_id, inspection_date, expiry_date, cost: cost ? parseFloat(cost) : null, report_url }]);
         
         btn.disabled = false;
         btn.innerText = "Muayene Kaydını Ekle";
@@ -1073,7 +1163,7 @@
             await supabase.from('insurance_logs').delete().eq('vehicle_id', id);
             await supabase.from('inspection_logs').delete().eq('vehicle_id', id);
 
-            const { error } = await supabase.from('vehicles').delete().eq('id', id)
+            const { error } = await supabase.from('vehicles').delete().eq('id', id);
             if (error) {
                 alert('Silme hatası: ' + error.message);
             } else { 
@@ -1088,49 +1178,49 @@
 
     window.deleteInsurance = async function(id) {
         if (confirm('Silmek istediğinize emin misiniz?')) {
-            const { error } = await supabase.from('insurance_logs').delete().eq('id', id)
+            const { error } = await supabase.from('insurance_logs').delete().eq('id', id);
             if (error) alert('Silme hatası: ' + error.message); else fetchInsurances();
         }
     }
 
     window.deleteLog = async function(id) {
         if (confirm('Silmek istediğinize emin misiniz?')) {
-            const { error } = await supabase.from('maintenance_logs').delete().eq('id', id)
+            const { error } = await supabase.from('maintenance_logs').delete().eq('id', id);
             if (error) alert('Silme hatası: ' + error.message); else fetchLogs();
         }
     }
 
     window.deleteInspection = async function(id) {
         if (confirm('Silmek istediğinize emin misiniz?')) {
-            const { error } = await supabase.from('inspection_logs').delete().eq('id', id)
+            const { error } = await supabase.from('inspection_logs').delete().eq('id', id);
             if (error) alert('Silme hatası: ' + error.message); else fetchInspections();
         }
     }
 
     // 📑 DİJİTAL GARAJ RAPORU (PDF) OLUŞTURMA FONKSİYONU
     window.generateVehicleReport = function() {
-        const vehicleId = document.getElementById('report_vehicle_select').value
+        const vehicleId = document.getElementById('report_vehicle_select').value;
         if (!vehicleId) {
-            alert('Lütfen raporunu oluşturmak istediğiniz aracı seçin!')
-            return
+            alert('Lütfen raporunu oluşturmak istediğiniz aracı seçin!');
+            return;
         }
 
-        const vehicle = globalVehicles.find(v => v.id === vehicleId)
+        const vehicle = globalVehicles.find(v => v.id === vehicleId);
         if (!vehicle) {
-            alert('Araç bulunamadı!')
-            return
+            alert('Araç bulunamadı!');
+            return;
         }
 
-        const vehicleMaint = globalMaintenance.filter(m => m.vehicle_id === vehicleId)
-        const vehicleInsp = globalInspections.filter(i => i.vehicle_id === vehicleId)
-        const vehicleIns = globalInsurances.filter(s => s.vehicle_id === vehicleId)
+        const vehicleMaint = globalMaintenance.filter(m => m.vehicle_id === vehicleId);
+        const vehicleInsp = globalInspections.filter(i => i.vehicle_id === vehicleId);
+        const vehicleIns = globalInsurances.filter(s => s.vehicle_id === vehicleId);
 
-        let totalMaintCost = vehicleMaint.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0)
-        let totalInspCost = vehicleInsp.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0)
-        let totalInsCost = vehicleIns.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0)
-        let grandTotal = totalMaintCost + totalInspCost + totalInsCost
+        let totalMaintCost = vehicleMaint.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0);
+        let totalInspCost = vehicleInsp.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0);
+        let totalInsCost = vehicleIns.reduce((acc, item) => acc + (parseFloat(item.cost) || 0), 0);
+        let grandTotal = totalMaintCost + totalInspCost + totalInsCost;
 
-        const reportWindow = window.open('', '_blank')
+        const reportWindow = window.open('', '_blank');
         
         const reportHtml = `
             <!DOCTYPE html>
@@ -1195,7 +1285,7 @@
                 ${vehicleMaint.length > 0 ? `
                     <table>
                         <thead>
-                            <tr>
+                        <tr>
                                 <th>Tarih</th>
                                 <th>İşlem Tanımı</th>
                                 <th>İşlem KM</th>
@@ -1274,14 +1364,16 @@
                 <\/script>
             </body>
             </html>
-        `
+        `;
 
-        reportWindow.document.write(reportHtml)
-        reportWindow.document.close()
+        reportWindow.document.write(reportHtml);
+        reportWindow.document.close();
     }
 
-    checkUserSession()
+    checkUserSession();
 </script>
 
 </body>
 </html>
+                        
+ 
