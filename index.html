@@ -380,7 +380,7 @@
             <input type="email" id="auth_email" placeholder="ornek@mail.com">
             
             <label>Şifre:</label>
-            <input type="password" id="auth_password" placeholder="******">
+            <input type="password" id="auth_password" placeholder="En az 6 karakter">
             
             <div class="forgot-password">
                 <a onclick="handleForgotPassword()">Şifremi Unuttum?</a>
@@ -569,6 +569,26 @@
     let globalInsurances = []
     let currentUserId = null
 
+    // 🔒 SIKI E-POSTA KONTROLÜ
+    function validateEmailStrict(email) {
+        const strictRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!strictRegex.test(email)) {
+            return { valid: false, message: 'Lütfen geçerli ve tam bir e-posta adresi girin (Örn: adiniz@gmail.com).' };
+        }
+
+        const blockedDomains = [
+            'tempmail.com', 'temp-mail.org', '10minutemail.com', 'guerrillamail.com',
+            'mailinator.com', 'yopmail.com', 'throwawaymail.com', 'fakeinbox.com',
+            'getnada.com', 'trashmail.com', 'example.com', 'test.com'
+        ];
+        const domain = email.split('@')[1].toLowerCase();
+        if (blockedDomains.includes(domain)) {
+            return { valid: false, message: 'Geçici veya test amaçlı e-posta adresleri kabul edilmemektedir.' };
+        }
+
+        return { valid: true };
+    }
+
     function compressImage(file) {
         return new Promise((resolve) => {
             if (!file || !file.type.startsWith('image/')) {
@@ -650,7 +670,6 @@
         document.getElementById('app-content').style.display = 'none';
     }
 
-    // Oturum durumunu anlık dinle
     supabase.auth.onAuthStateChange((event, session) => {
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
             showAppView(session);
@@ -672,7 +691,6 @@
                 return;
             }
 
-            // Açılış animasyonunun (splash) en az 1.5 saniye ekranda kalmasını sağlayan şık gecikme
             const minSplashTime = new Promise(resolve => setTimeout(resolve, 1500));
             const sessionPromise = supabase.auth.getSession();
             
@@ -696,11 +714,25 @@
     window.handleLogin = async function() {
         const email = document.getElementById('auth_email').value.trim();
         const password = document.getElementById('auth_password').value;
-        if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
+        
+        if (!email || !password) { 
+            alert('Lütfen e-posta ve şifrenizi girin!'); 
+            return; 
+        }
+
+        const emailCheck = validateEmailStrict(email);
+        if (!emailCheck.valid) {
+            alert(emailCheck.message);
+            return;
+        }
         
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-            alert('Giriş başarısız: ' + error.message);
+            if (error.message.includes('Email not confirmed')) {
+                alert('Giriş başarısız: E-posta adresiniz henüz onaylanmamış! Lütfen gelen kutunuzdaki (veya spam\'deki) doğrulama bağlantısına tıklayın.');
+            } else {
+                alert('Giriş başarısız: E-posta veya şifre hatalı.');
+            }
         } else if (data && data.session) {
             showAppView(data.session);
         }
@@ -709,32 +741,63 @@
     window.handleSignup = async function() {
         const email = document.getElementById('auth_email').value.trim();
         const password = document.getElementById('auth_password').value;
-        if (!email || !password) { alert('Lütfen e-posta ve şifrenizi girin!'); return; }
         
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (!email || !password) { 
+            alert('Lütfen e-posta ve şifrenizi girin!'); 
+            return; 
+        }
+
+        const emailCheck = validateEmailStrict(email);
+        if (!emailCheck.valid) {
+            alert(emailCheck.message);
+            return;
+        }
+
+        if (password.length < 6) {
+            alert('Şifreniz en az 6 karakter olmalıdır!');
+            return;
+        }
+        
+        const { data, error } = await supabase.auth.signUp({ 
+            email, 
+            password,
+            options: {
+                emailRedirectTo: window.location.origin + window.location.pathname
+            }
+        });
+
         if (error) {
             alert('Kayıt başarısız: ' + error.message);
-        } else if (data && data.session) {
-            showAppView(data.session);
         } else {
-            alert('Kayıt başarılı! Giriş yapabilirsiniz.');
+            alert('Kayıt başarılı! Lütfen e-posta adresinize (veya spam klasörüne) gönderilen doğrulama bağlantısına tıklayarak hesabınızı etkinleştirin.');
         }
     }
 
     window.handleForgotPassword = async function() {
         const email = document.getElementById('auth_email').value.trim();
-        if (!email) { alert('Lütfen şifresini unuttuğunuz e-posta adresinizi üstteki kutuya yazın!'); return; }
+        if (!email) { 
+            alert('Lütfen şifresini unuttuğunuz e-posta adresinizi üstteki kutuya yazın!'); 
+            return; 
+        }
+
+        const emailCheck = validateEmailStrict(email);
+        if (!emailCheck.valid) {
+            alert(emailCheck.message);
+            return;
+        }
+
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
         if (error) {
             alert('İşlem başarısız: ' + error.message);
         } else {
-            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! Gelen kutunuzu (veya spam klasörünü) kontrol edebilirsiniz.');
+            alert('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!');
         }
     }
 
     window.handleUpdatePassword = async function() {
         const newPassword = document.getElementById('new_password').value;
         if (!newPassword) { alert('Lütfen yeni şifrenizi girin!'); return; }
+        if (newPassword.length < 6) { alert('Yeni şifreniz en az 6 karakter olmalıdır!'); return; }
 
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) {
@@ -901,8 +964,6 @@
 
         globalVehicles = data || [];
         selectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
-        inspSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
-        kmSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
         insSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
         if (reportSelectBox) reportSelectBox.innerHTML = '<option value="">Araç Seçiniz</option>';
 
@@ -939,6 +1000,70 @@
 
         insDiv.innerHTML = '';
         globalInsurances.forEach(ins => {
+            const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç';
+            const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : '';
+            const companyInfo = ins.company_name ? ` (${ins.company_name})` : '';
+            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : '';
+            const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`);
+
+            insDiv.innerHTML += `
+                <div class="insurance-card">
+                    <strong>${vehicleInfo} - ${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
+                    Başlangıç: ${ins.start_date} | <strong>Bitiş: ${ins.expiry_date}</strong>${reportHtml}<br>
+                    <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>
+                    <br><button class="btn-danger" onclick="deleteInsurance('${ins.id}')">Poliçeyi Sil</button>
+                </div>
+            `;
+        });
+        calculateTotalCost();
+    }
+
+    async function fetchLogs() {
+        const logDiv = document.getElementById('log-list');
+        const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false });
+        if (error) { logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message; return; }
+
+        globalMaintenance = data || [];
+        checkReminders();
+
+        if (globalMaintenance.length === 0) { logDiv.innerHTML = 'Henüz bakım kaydı yok.'; calculateTotalCost(); return; }
+
+        logDiv.innerHTML = '';
+        globalMaintenance.forEach(log => {
+            const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç';
+            const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : '';
+            const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : '';
+            
+            let calBtn = '';
+            if (log.next_date) {
+                const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} bakım zamanı!`);
+                calBtn = `<br><a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>`;
+            }
+
+            logDiv.innerHTML += `
+                <div class="log-card">
+                    <strong>${vehicleInfo} - ${log.title}</strong><br>
+                    Tutar: ${log.cost} TL | İşlem KM: ${log.km || '-'}<br>
+                    Tarih: ${log.date || '-'}${nextInfo}${reportHtml}${calBtn}
+                    <br><button class="btn-danger" onclick="deleteLog('${log.id}')">Bakım Kaydını Sil</button>
+                </div>
+            `;
+        });
+        calculateTotalCost();
+    }
+
+    async function fetchInspections() {
+        const inspDiv = document.getElementById('inspection-list');
+        const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true });
+        if (error) { inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message; return; }
+
+        globalInspections = data || [];
+        checkReminders();
+
+        if (globalInspections.length === 0) { inspDiv.innerHTML = 'Henüz muayene kaydı yok.'; calculateTotalCost(); return; }
+
+        inspDiv.innerHTML = '';
+        globalInspections.forEach(insp => {
             const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç';
             const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : '';
             const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Muayene Raporu</a>` : '';
@@ -1184,7 +1309,7 @@
                         .no-print { display: none; }
                     }
                 </style>
-            </head>
+                </head>
             <body>
                 <div class="header">
                     <div>
