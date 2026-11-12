@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- GÜVENLİK: İçerik Güvenlik Politikası (CSP) eklendi -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co https://calendar.google.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://*.supabase.co; img-src 'self' data: https://*.supabase.co;">
+    <!-- GÜVENLİK: İçerik Güvenlik Politikası (CSP) güncellendi -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co https://calendar.google.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://*.supabase.co; img-src 'self' data: https://*.supabase.co https://*.supabase.in;">
     <title>GarajDefteri</title>
     <!-- 🖼️ PWA VE LOGO ENTEGRASYONU -->
     <link rel="icon" type="image/png" href="./icon-yeni.png">
@@ -563,6 +563,16 @@
 <script type="module">
     import { supabase } from './supabase.js'
 
+    // 🛡️ ZORUNLU EMNİYET ZAMANLAYICISI (FAIL-SAFE)
+    // Ağ veya oturum kontrolü gecikse bile 3 saniye içinde splash ekranını zorla kapatır
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash && splash.style.display !== 'none') {
+            splash.style.opacity = '0';
+            setTimeout(() => { splash.style.display = 'none'; }, 600);
+        }
+    }, 3000);
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
@@ -761,22 +771,7 @@
                 }
             }
         })
-
-        globalMaintenance.forEach(log => {
-            const vehicle = globalVehicles.find(v => v.id === log.vehicle_id)
-            const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
-            if (log.next_date) {
-                const nextDate = new Date(log.next_date)
-                const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24))
-                if (diffDays <= 15 && diffDays >= 0) {
-                    hasWarning = true
-                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihine <strong>${diffDays} gün</strong> kaldı!<br>`
-                } else if (diffDays < 0) {
-                    hasWarning = true
-                    warningText += `🔧 <strong>${vehicleName}</strong> (${log.title}) bakım tarihi <strong>geldi/geçti!</strong><br>`
-                }
-            }
-            if (log.next_km && vehicle && vehicle.current_km) {
+        if (log.next_km && vehicle && vehicle.current_km) {
                 const kmDiff = log.next_km - vehicle.current_km
                 if (kmDiff <= 1000 && kmDiff >= 0) {
                     hasWarning = true
@@ -906,7 +901,6 @@
             const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
             const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : ''
             const companyInfo = ins.company_name ? ` (${ins.company_name})` : ''
-            <!-- Güvenlik: rel="noopener noreferrer" eklendi -->
             const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : ''
             const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`)
 
@@ -935,7 +929,6 @@
         logDiv.innerHTML = ''
         globalMaintenance.forEach(log => {
             const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
-            <!-- Güvenlik: rel="noopener noreferrer" eklendi -->
             const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : ''
             const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : ''
             
@@ -971,7 +964,6 @@
         globalInspections.forEach(insp => {
             const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
             const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
-            <!-- Güvenlik: rel="noopener noreferrer" eklendi -->
             const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Muayene Raporu</a>` : ''
             const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi bitiyor!`)
 
@@ -1135,7 +1127,7 @@
                 fetchLogs(); 
                 fetchInspections(); 
             }
-        }
+     }
     }
 
     window.deleteInsurance = async function(id) {
