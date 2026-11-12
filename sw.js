@@ -1,10 +1,10 @@
-const CACHE_NAME = 'garajdefteri-v3';
+const CACHE_NAME = 'garajdefteri-v4';
 const ASSETS = [
-  './',
-  './index.html',
-  './icon-yeni.png',
-  './manifest.json',
-  './supabase.js'
+  '/garaj-defteri/',
+  '/garaj-defteri/index.html',
+  '/garaj-defteri/icon-yeni.png',
+  '/garaj-defteri/manifest.json',
+  '/garaj-defteri/supabase.js'
 ];
 
 self.addEventListener('install', (e) => {
@@ -33,8 +33,13 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
+    caches.match(e.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(e.request).catch(() => {
+        // Çevrimdışı durumlar için yedek mekanizma (isteğe bağlı)
+      });
     })
   );
 });
