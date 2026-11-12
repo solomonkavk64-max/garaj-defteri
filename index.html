@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- GÜVENLİK: İçerik Güvenlik Politikası (CSP) eklendi -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co https://calendar.google.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://*.supabase.co; img-src 'self' data: https://*.supabase.co;">
     <title>GarajDefteri</title>
     <!-- 🖼️ PWA VE LOGO ENTEGRASYONU -->
     <link rel="icon" type="image/png" href="./icon-yeni.png">
@@ -426,7 +428,7 @@
             <button onclick="resetDateFilter()" style="background: var(--danger); margin-top: 10px; padding: 8px; font-size: 12px;">Tüm Zamanları Göster</button>
         </div>
 
-        <!-- 📑 DİJİTAL GARAJ RAPORU (PDF) MODÜLÜ - MALİYET ÖZETİNİN HEMEN ALTINDA -->
+        <!-- 📑 DİJİTAL GARAJ RAPORU (PDF) MODÜLÜ -->
         <div class="form-group" style="border: 1px solid var(--primary);">
             <h3 style="color: var(--primary);">📑 Dijital Garaj Raporu Oluştur (PDF)</h3>
             <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
@@ -734,35 +736,17 @@
             if (ins.expiry_date) {
                 const expiryDate = new Date(ins.expiry_date)
                 const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
-                const vehicleName = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
+                const vehicleName = ins.vehicles ? `${ins.vehicles.brand}${ins.vehicles.model}` : 'Araç'
                 if (diffDays <= 15 && diffDays >= 0) {
                     hasWarning = true
-                    warningText += `🛡️ <strong>${vehicleName}</strong> ${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>`
-                } else if (diffDays < 0) {
-                    hasWarning = true
-                    warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>`
-                }
-            }
-        })
-
-        globalInspections.forEach(insp => {
-            if (insp.expiry_date) {
-                const expiryDate = new Date(insp.expiry_date)
-                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
-                const vehicleName = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
-                if (diffDays <= 30 && diffDays >= 0) {
-                    hasWarning = true
-                    warningText += `⚠️ <strong>${vehicleName}</strong> muayenesine <strong>${diffDays} gün</strong> kaldı!<br>`
-                } else if (diffDays < 0) {
-                    hasWarning = true
-                    warningText += `🚨 <strong>${vehicleName}</strong> muayene süresi <strong>GEÇMİŞ!</strong><br>`
+                    warningText += `🛡️ <strong>${vehicleName}</strong>${ins.insurance_type} bitişine <strong>${diffDays} gün</strong> kaldı!<br>` } else if (diffDays < 0) { hasWarning = true warningText += `🚨 <strong>${vehicleName}</strong> ${ins.insurance_type} süresi <strong>DOLMUŞ!</strong><br>` } } })  globalInspections.forEach(insp => { if (insp.expiry_date) { const expiryDate = new Date(insp.expiry_date) const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24)) const vehicleName = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç' if (diffDays <= 30 && diffDays >= 0) { hasWarning = true warningText += `⚠️ <strong>${vehicleName}</strong> muayenesine <strong>${diffDays} gün</strong> kaldı!<br>` } else if (diffDays < 0) { hasWarning = true warningText += `🚨 <strong>${vehicleName}</strong> muayene süresi <strong>GEÇMİŞ!</strong><br>`
                 }
             }
         })
 
         globalMaintenance.forEach(log => {
             const vehicle = globalVehicles.find(v => v.id === log.vehicle_id)
-            const vehicleName = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
+            const vehicleName = log.vehicles ? `${log.vehicles.brand}${log.vehicles.model}` : 'Araç'
             if (log.next_date) {
                 const nextDate = new Date(log.next_date)
                 const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24))
@@ -778,10 +762,7 @@
                 const kmDiff = log.next_km - vehicle.current_km
                 if (kmDiff <= 1000 && kmDiff >= 0) {
                     hasWarning = true
-                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresine <strong>${kmDiff} KM</strong> kaldı!<br>`
-                } else if (kmDiff < 0) {
-                    hasWarning = true
-                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresini <strong>${Math.abs(kmDiff)} KM</strong> aştınız!<br>`
+                    warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresine <strong>${kmDiff} KM</strong> kaldı!<br>` } else if (kmDiff < 0) { hasWarning = true warningText += `📊 <strong>${vehicleName}</strong> bakım kilometresini <strong>${Math.abs(kmDiff)} KM</strong> aştınız!<br>`
                 }
             }
         })
@@ -838,10 +819,10 @@
 
         const grandTotal = totalMaint + totalInsp + totalIns
         let infoText = "Tüm Zamanlar"
-        if (startDateVal && endDateVal) infoText = `${startDateVal} - ${endDateVal}`
+        if (startDateVal && endDateVal) infoText = `${startDateVal} -${endDateVal}`
 
         costDisplay.innerHTML = `Harcama (${infoText}): <strong>${grandTotal.toLocaleString('tr-TR')} TL</strong><br>
-            <span style="font-size: 11px; color: var(--text-muted);">(Bakım: ${totalMaint.toLocaleString('tr-TR')} | Muayene: ${totalInsp.toLocaleString('tr-TR')} | Sigorta: ${totalIns.toLocaleString('tr-TR')})</span>`
+            <span style="font-size: 11px; color: var(--text-muted);">(Bakım: ${totalMaint.toLocaleString('tr-TR')} | Muayene: ${totalInsp.toLocaleString('tr-TR')} \vert{} Sigorta:${totalIns.toLocaleString('tr-TR')})</span>`
     }
 
     window.resetDateFilter = function() {
@@ -875,7 +856,7 @@
             listDiv.innerHTML += `
                 <div class="vehicle-card">
                     <strong>${vehicle.brand} ${vehicle.model} (${vehicle.year || 'Yıl yok'})</strong><br>
-                    Plaka: ${vehicle.plate || 'Belirtilmemiş'} | KM: ${vehicle.current_km}<br>
+                    Plaka: ${vehicle.plate \vert{}\vert{} 'Belirtilmemiş'} \vert{} KM: ${vehicle.current_km}<br>
                     <button class="btn-danger" onclick="deleteVehicle('${vehicle.id}')">Aracı Sil</button>
                 </div>
             `
@@ -901,17 +882,17 @@
 
         insDiv.innerHTML = ''
         globalInsurances.forEach(ins => {
-            const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand} ${ins.vehicles.model}` : 'Araç'
-            const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : ''
-            const companyInfo = ins.company_name ? ` (${ins.company_name})` : ''
-            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : ''
+            const vehicleInfo = ins.vehicles ? `${ins.vehicles.brand}${ins.vehicles.model}` : 'Araç'
+            const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : '' const companyInfo = ins.company_name ? ` (${ins.company_name})` : ''
+            <!-- Güvenlik: rel="noopener noreferrer" eklendi -->
+            const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : ''
             const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`)
 
             insDiv.innerHTML += `
                 <div class="insurance-card">
-                    <strong>${vehicleInfo} - ${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
+                    <strong>${vehicleInfo} -${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
                     Başlangıç: ${ins.start_date} | <strong>Bitiş: ${ins.expiry_date}</strong>${reportHtml}<br>
-                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>
+                    <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>
                     <br><button class="btn-danger" onclick="deleteInsurance('${ins.id}')">Poliçeyi Sil</button>
                 </div>
             `
@@ -931,21 +912,22 @@
 
         logDiv.innerHTML = ''
         globalMaintenance.forEach(log => {
-            const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
-            const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : ''
+            const vehicleInfo = log.vehicles ? `${log.vehicles.brand}${log.vehicles.model}` : 'Araç'
+            <!-- Güvenlik: rel="noopener noreferrer" eklendi -->
+            const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : ''
             const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : ''
             
             let calBtn = ''
             if (log.next_date) {
                 const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} bakım zamanı!`)
-                calBtn = `<br><a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>`
+                calBtn = `<br><a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>`
             }
 
             logDiv.innerHTML += `
                 <div class="log-card">
-                    <strong>${vehicleInfo} - ${log.title}</strong><br>
+                    <strong>${vehicleInfo} -${log.title}</strong><br>
                     Tutar: ${log.cost} TL | İşlem KM: ${log.km || '-'}<br>
-                    Tarih: ${log.date || '-'}${nextInfo}${reportHtml}${calBtn}
+                    Tarih: ${log.date \vert{}\vert{} '-'}${nextInfo}${reportHtml}${calBtn}
                     <br><button class="btn-danger" onclick="deleteLog('${log.id}')">Bakım Kaydını Sil</button>
                 </div>
             `
@@ -965,16 +947,16 @@
 
         inspDiv.innerHTML = ''
         globalInspections.forEach(insp => {
-            const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
-            const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
-            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" class="receipt-link">📄 Muayene Raporu</a>` : ''
+            const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç' const costInfo = insp.cost ? ` \vert{} Ücret: ${insp.cost} TL` : ''
+            <!-- Güvenlik: rel="noopener noreferrer" eklendi -->
+            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Muayene Raporu</a>` : ''
             const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi bitiyor!`)
 
             inspDiv.innerHTML += `
                 <div class="inspection-card">
                     <strong>${vehicleInfo} - Muayene</strong>${costInfo}<br>
                     Tarih: ${insp.inspection_date} | <strong>Son Geçerlilik: ${insp.expiry_date}</strong>${reportHtml}<br>
-                    <a href="${calUrl}" target="_blank" class="btn-calendar">📅 Takvime Ekle</a>
+                    <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>
                     <br><button class="btn-danger" onclick="deleteInspection('${insp.id}')">Muayene Kaydını Sil</button>
                 </div>
             `
@@ -1184,7 +1166,7 @@
             <html lang="tr">
             <head>
                 <meta charset="UTF-8">
-                <title>GarajDefteri - ${vehicle.brand} ${vehicle.model} Raporu</title>
+                <title>GarajDefteri - ${vehicle.brand}${vehicle.model} Raporu</title>
                 <style>
                     body { font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #1e293b; background: #fff; }
                     .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -1223,7 +1205,7 @@
                 <div class="grid">
                     <div class="card">
                         <h3>📋 Araç Bilgileri</h3>
-                        <p><strong>Marka / Model:</strong> ${vehicle.brand} ${vehicle.model}</p>
+                        <p><strong>Marka / Model:</strong> ${vehicle.brand}${vehicle.model}</p>
                         <p><strong>Model Yılı:</strong> ${vehicle.year || '-'}</p>
                         <p><strong>Güncel Kilometre:</strong> ${vehicle.current_km ? vehicle.current_km.toLocaleString('tr-TR') + ' KM' : '-'}</p>
                     </div>
@@ -1260,75 +1242,4 @@
                             `).join('')}
                         </tbody>
                     </table>
-                ` : '<p style="font-size:12px; color:#64748b;">Kayıtlı bakım bulunmuyor.</p>'}
-
-                <div class="section-title">🛡️ Sigorta & Kasko Geçmişi</div>
-                ${vehicleIns.length > 0 ? `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tür</th>
-                                <th>Şirket</th>
-                                <th>Başlangıç</th>
-                                <th>Bitiş</th>
-                                <th>Tutar (TL)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${vehicleIns.map(s => `
-                                <tr>
-                                    <td>${s.insurance_type}</td>
-                                    <td>${s.company_name || '-'}</td>
-                                    <td>${s.start_date || '-'}</td>
-                                    <td>${s.expiry_date || '-'}</td>
-                                    <td>${parseFloat(s.cost || 0).toLocaleString('tr-TR')} TL</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                ` : '<p style="font-size:12px; color:#64748b;">Kayıtlı sigorta bulunmuyor.</p>'}
-
-                <div class="section-title">🔍 TÜVTÜRK Muayene Geçmişi</div>
-                ${vehicleInsp.length > 0 ? `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Muayene Tarihi</th>
-                                <th>Son Geçerlilik</th>
-                                <th>Tutar (TL)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${vehicleInsp.map(i => `
-                                <tr>
-                                    <td>${i.inspection_date || '-'}</td>
-                                    <td>${i.expiry_date || '-'}</td>
-                                    <td>${parseFloat(i.cost || 0).toLocaleString('tr-TR')} TL</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                ` : '<p style="font-size:12px; color:#64748b;">Kayıtlı muayene bulunmuyor.</p>'}
-
-                <div class="footer">
-                    Bu belge GarajDefteri uygulaması tarafından otomatik olarak üretilmiştir. © 2026 GarajDefteri
-                </div>
-
-                <script>
-                    window.onload = function() {
-                        window.print();
-                    }
-                <\/script>
-            </body>
-            </html>
-        `
-
-        reportWindow.document.write(reportHtml)
-        reportWindow.document.close()
-    }
-
-    checkUserSession()
-</script>
-
-</body>
-</html>
+                ` : '<p style="font-size:
