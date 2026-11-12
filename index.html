@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- GÜVENLİK: İçerik Güvenlik Politikası (CSP) güncellendi -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co https://calendar.google.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://*.supabase.co; img-src 'self' data: https://*.supabase.co https://*.supabase.in;">
+    <!-- GÜVENLİK: İçerik Güvenlik Politikası (CSP) CDN ve Supabase için tam uyumlu hale getirildi -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co https://*.supabase.in https://cdn.jsdelivr.net https://calendar.google.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in;">
     <title>GarajDefteri</title>
     <!-- 🖼️ PWA VE LOGO ENTEGRASYONU -->
     <link rel="icon" type="image/png" href="./icon-yeni.png">
@@ -572,21 +572,11 @@
         }
     }, 3000);
 
-    /* 
-       GEÇİCİ OLARAK SERVICE WORKER DEVREDŞI (Önbellek takılmasını önlemek için)
-       if ('serviceWorker' in navigator) {
-           window.addEventListener('load', () => {
-               navigator.serviceWorker.register('./sw.js')
-                   .then((reg) => console.log('Service Worker registered', reg))
-                   .catch((err) => console.log('Service Worker registration failed', err));
-           });
-       }
-    */
-
     let globalVehicles = []
     let globalMaintenance = []
     let globalInspections = []
     let globalInsurances = []
+    let currentUserId = null
 
     function compressImage(file) {
         return new Promise((resolve) => {
@@ -655,30 +645,42 @@
     }
 
     async function checkUserSession() {
-        const hash = window.location.hash;
-        const search = window.location.search;
-        
-        if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
-            (search && (search.includes('type=recovery') || search.includes('access_token')))) {
-            document.getElementById('auth-container').style.display = 'none'
-            document.getElementById('app-content').style.display = 'none'
-            document.getElementById('update-password-container').style.display = 'block'
-            hideSplashScreen();
-            return;
-        }
+        try {
+            const hash = window.location.hash;
+            const search = window.location.search;
+            
+            if ((hash && (hash.includes('type=recovery') || hash.includes('access_token'))) ||
+                (search && (search.includes('type=recovery') || search.includes('access_token')))) {
+                document.getElementById('auth-container').style.display = 'none'
+                document.getElementById('app-content').style.display = 'none'
+                document.getElementById('update-password-container').style.display = 'block'
+                hideSplashScreen();
+                return;
+            }
 
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-            document.getElementById('auth-container').style.display = 'none'
-            document.getElementById('update-password-container').style.display = 'none'
-            document.getElementById('app-content').style.display = 'block'
-            await loadAllData()
-        } else {
+            const { data: { session }, error } = await supabase.auth.getSession()
+            if (error) throw error;
+
+            if (session) {
+                currentUserId = session.user.id
+                document.getElementById('auth-container').style.display = 'none'
+                document.getElementById('update-password-container').style.display = 'none'
+                document.getElementById('app-content').style.display = 'block'
+                await loadAllData()
+            } else {
+                currentUserId = null
+                document.getElementById('auth-container').style.display = 'block'
+                document.getElementById('update-password-container').style.display = 'none'
+                document.getElementById('app-content').style.display = 'none'
+            }
+        } catch (err) {
+            console.error('Oturum kontrol hatası:', err)
             document.getElementById('auth-container').style.display = 'block'
             document.getElementById('update-password-container').style.display = 'none'
             document.getElementById('app-content').style.display = 'none'
+        } finally {
+            hideSplashScreen();
         }
-        hideSplashScreen();
     }
 
     window.handleLogin = async function() {
@@ -902,6 +904,7 @@
         })
         checkReminders()
     }
+
     async function fetchInsurances() {
         const insDiv = document.getElementById('insurance-list')
         const { data, error } = await supabase.from('insurance_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
@@ -918,69 +921,6 @@
             const costInfo = ins.cost ? ` | Ücret: ${ins.cost} TL` : ''
             const companyInfo = ins.company_name ? ` (${ins.company_name})` : ''
             const reportHtml = ins.policy_url ? `<br><a href="${ins.policy_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Poliçe Belgesini Görüntüle</a>` : ''
-            const calUrl = getGoogleCalendarUrl(`🛡️ ${ins.insurance_type} Bitişi (${vehicleInfo})`, ins.expiry_date, `GarajDefteri: ${vehicleInfo} aracınızın ${ins.insurance_type} süresi bitiyor!`)
-
-            insDiv.innerHTML += `
-                <div class="insurance-card">
-                    <strong>${vehicleInfo} - ${ins.insurance_type}</strong>${companyInfo}${costInfo}<br>
-                    Başlangıç: ${ins.start_date} | <strong>Bitiş: ${ins.expiry_date}</strong>${reportHtml}<br>
-                    <a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>
-                    <br><button class="btn-danger" onclick="deleteInsurance('${ins.id}')">Poliçeyi Sil</button>
-                </div>
-            `
-        })
-        calculateTotalCost()
-    }
-
-    async function fetchLogs() {
-        const logDiv = document.getElementById('log-list')
-        const { data, error } = await supabase.from('maintenance_logs').select('*, vehicles(brand, model)').order('date', { ascending: false })
-        if (error) { logDiv.innerHTML = 'Bakımlar yüklenemedi: ' + error.message; return; }
-
-        globalMaintenance = data || []
-        checkReminders()
-
-        if (globalMaintenance.length === 0) { logDiv.innerHTML = 'Henüz bakım kaydı yok.'; calculateTotalCost(); return; }
-
-        logDiv.innerHTML = ''
-        globalMaintenance.forEach(log => {
-            const vehicleInfo = log.vehicles ? `${log.vehicles.brand} ${log.vehicles.model}` : 'Araç'
-            const reportHtml = log.receipt_url ? `<br><a href="${log.receipt_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Fiş / Fatura Belgesini Görüntüle</a>` : ''
-            const nextInfo = (log.next_km || log.next_date) ? `<br><span style="color:var(--danger); font-size:11px;">Sonraki Bakım: ${log.next_km ? log.next_km + ' KM' : ''} ${log.next_date ? '(' + log.next_date + ')' : ''}</span>` : ''
-            
-            let calBtn = ''
-            if (log.next_date) {
-                const calUrl = getGoogleCalendarUrl(`🔧 Periyodik Bakım (${vehicleInfo})`, log.next_date, `GarajDefteri: ${vehicleInfo} bakım zamanı!`)
-                calBtn = `<br><a href="${calUrl}" target="_blank" rel="noopener noreferrer" class="btn-calendar">📅 Takvime Ekle</a>`
-            }
-
-            logDiv.innerHTML += `
-                <div class="log-card">
-                    <strong>${vehicleInfo} - ${log.title}</strong><br>
-                    Tutar: ${log.cost} TL | İşlem KM: ${log.km || '-'}<br>
-                    Tarih: ${log.date || '-'}${nextInfo}${reportHtml}${calBtn}
-                    <br><button class="btn-danger" onclick="deleteLog('${log.id}')">Bakım Kaydını Sil</button>
-                </div>
-            `
-        })
-        calculateTotalCost()
-    }
-
-    async function fetchInspections() {
-        const inspDiv = document.getElementById('inspection-list')
-        const { data, error } = await supabase.from('inspection_logs').select('*, vehicles(brand, model)').order('expiry_date', { ascending: true })
-        if (error) { inspDiv.innerHTML = 'Muayeneler yüklenemedi: ' + error.message; return; }
-
-        globalInspections = data || []
-        checkReminders()
-
-        if (globalInspections.length === 0) { inspDiv.innerHTML = 'Henüz muayene kaydı yok.'; calculateTotalCost(); return; }
-
-        inspDiv.innerHTML = ''
-        globalInspections.forEach(insp => {
-            const vehicleInfo = insp.vehicles ? `${insp.vehicles.brand} ${insp.vehicles.model}` : 'Araç'
-            const costInfo = insp.cost ? ` | Ücret: ${insp.cost} TL` : ''
-            const reportHtml = insp.report_url ? `<br><a href="${insp.report_url}" target="_blank" rel="noopener noreferrer" class="receipt-link">📄 Muayene Raporu</a>` : ''
             const calUrl = getGoogleCalendarUrl(`🚗 Araç Muayene Bitişi (${vehicleInfo})`, insp.expiry_date, `GarajDefteri: ${vehicleInfo} muayene süresi bitiyor!`)
 
             inspDiv.innerHTML += `
@@ -1002,7 +942,7 @@
         const current_km = document.getElementById('current_km').value
         const plate = document.getElementById('plate').value
         if (!brand || !model || !current_km) { alert('Lütfen marka, model ve kilometre alanlarını doldurun!'); return; }
-        const { error } = await supabase.from('vehicles').insert([{ brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }])
+        const { error } = await supabase.from('vehicles').insert([{ user_id: currentUserId, brand, model, year: year ? parseInt(year) : null, current_km: parseInt(current_km), plate }])
         if (error) alert('Kayıt başarısız: ' + error.message); else { alert('Araç eklendi!'); document.getElementById('brand').value = ''; document.getElementById('model').value = ''; document.getElementById('year').value = ''; document.getElementById('current_km').value = ''; document.getElementById('plate').value = ''; fetchVehicles(); }
     }
 
@@ -1044,7 +984,7 @@
             policy_url = publicUrlData.publicUrl
         }
 
-        const { error } = await supabase.from('insurance_logs').insert([{ vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url }])
+        const { error } = await supabase.from('insurance_logs').insert([{ user_id: currentUserId, vehicle_id, insurance_type, company_name, start_date, expiry_date, cost: cost ? parseFloat(cost) : null, policy_url }])
         
         btn.disabled = false;
         btn.innerText = "Poliçeyi Kaydet";
@@ -1083,7 +1023,7 @@
             receipt_url = publicUrlData.publicUrl
         }
 
-        const { error } = await supabase.from('maintenance_logs').insert([{ vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, next_km: next_km ? parseInt(next_km) : null, next_date: next_date || null, receipt_url }])
+        const { error } = await supabase.from('maintenance_logs').insert([{ user_id: currentUserId, vehicle_id, title, cost: parseFloat(cost), km: km ? parseInt(km) : null, date: date || null, next_km: next_km ? parseInt(next_km) : null, next_date: next_date || null, receipt_url }])
         
         btn.disabled = false;
         btn.innerText = "Bakım Kaydını Ekle";
@@ -1119,7 +1059,7 @@
             report_url = publicUrlData.publicUrl
         }
 
-        const { error } = await supabase.from('inspection_logs').insert([{ vehicle_id, inspection_date, expiry_date, cost: cost ? parseFloat(cost) : null, report_url }])
+        const { error } = await supabase.from('inspection_logs').insert([{ user_id: currentUserId, vehicle_id, inspection_date, expiry_date, cost: cost ? parseFloat(cost) : null, report_url }])
         
         btn.disabled = false;
         btn.innerText = "Muayene Kaydını Ekle";
